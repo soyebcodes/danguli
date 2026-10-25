@@ -1,30 +1,41 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { ArrowRight, MapPin, PiggyBank, Sparkles } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { motion } from "framer-motion";
+import { ArrowRight, MapPin, PiggyBank, Sparkles } from "lucide-react";
+import { useMemo, useState } from "react";
 
-import { PotholeMiniGame } from '@/components/rickshaw/PotholeMiniGame';
-import { RickshawScene } from '@/components/rickshaw/RickshawScene';
-import { refusalExcuses } from '@/data/excuses';
-import { routeOptions, type RouteOption } from '@/data/routes';
-import { playDustWhistle, playRickshawBell } from '@/lib/sound';
+import { PotholeMiniGame } from "@/components/rickshaw/PotholeMiniGame";
+import { RickshawScene } from "@/components/rickshaw/RickshawScene";
+import { ShareCard } from "@/components/ui/ShareCard";
+import { StatBadge } from "@/components/ui/StatBadge";
+import { refusalExcuses } from "@/data/excuses";
+import { routeOptions, type RouteOption } from "@/data/routes";
+import { usePersistentStats } from "@/hooks/usePersistentStats";
+import { useSoundFX } from "@/hooks/useSoundFX";
 
 export default function HomePage() {
-  const [selectedRoute, setSelectedRoute] = useState<RouteOption>(routeOptions[0]);
+  const [selectedRoute, setSelectedRoute] = useState<RouteOption>(
+    routeOptions[0],
+  );
   const [fare, setFare] = useState(220);
   const [triggerCount, setTriggerCount] = useState(0);
   const [insultText, setInsultText] = useState<string>(refusalExcuses[0]);
   const [isEscaping, setIsEscaping] = useState(false);
+  const { stats, addRefusal } = usePersistentStats();
+  const { playBell, playWhistle } = useSoundFX();
 
   const mood = useMemo(() => {
     if (fare <= 40) {
-      return { emoji: '😠', label: 'Furious face', tone: 'text-rose-300' };
+      return { emoji: "😠", label: "Furious face", tone: "text-rose-300" };
     }
     if (fare <= 150) {
-      return { emoji: '😒', label: 'Unimpressed', tone: 'text-amber-300' };
+      return { emoji: "😒", label: "Unimpressed", tone: "text-amber-300" };
     }
-    return { emoji: '🤑', label: 'Dollar-sign stare', tone: 'text-emerald-300' };
+    return {
+      emoji: "🤑",
+      label: "Dollar-sign stare",
+      tone: "text-emerald-300",
+    };
   }, [fare]);
 
   const showPotholeMode = fare > 250;
@@ -35,8 +46,9 @@ export default function HomePage() {
       refusalExcuses[Math.floor(Math.random() * refusalExcuses.length)];
     setInsultText(nextExcuse);
     setIsEscaping(true);
-    playRickshawBell();
-    playDustWhistle();
+    playBell();
+    playWhistle();
+    addRefusal(fare);
 
     window.setTimeout(() => setIsEscaping(false), 900);
   };
@@ -59,7 +71,7 @@ export default function HomePage() {
             </h1>
           </div>
           <div className="rounded-full border border-amber-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
-            Refusal streak:{' '}
+            Refusal streak:{" "}
             <span className="font-bold text-rose-500">{triggerCount}</span>
           </div>
         </motion.header>
@@ -87,11 +99,17 @@ export default function HomePage() {
                 </span>
                 <select
                   value={selectedRoute}
-                  onChange={(event) => setSelectedRoute(event.target.value as RouteOption)}
+                  onChange={(event) =>
+                    setSelectedRoute(event.target.value as RouteOption)
+                  }
                   className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none transition focus:border-amber-400"
                 >
                   {routeOptions.map((route) => (
-                    <option key={route} value={route} className="text-slate-900">
+                    <option
+                      key={route}
+                      value={route}
+                      className="text-slate-900"
+                    >
                       {route}
                     </option>
                   ))}
@@ -101,7 +119,9 @@ export default function HomePage() {
               <div>
                 <div className="mb-2 flex items-center justify-between text-sm font-medium text-slate-300">
                   <span>Fare offer</span>
-                  <span className="text-xl font-bold text-amber-300">৳{fare}</span>
+                  <span className="text-xl font-bold text-amber-300">
+                    ৳{fare}
+                  </span>
                 </div>
                 <input
                   type="range"
@@ -145,7 +165,9 @@ export default function HomePage() {
                   <MapPin className="h-4 w-4 text-emerald-300" />
                   Selected route
                 </div>
-                <p className="mt-2 text-lg font-semibold text-white">{selectedRoute}</p>
+                <p className="mt-2 text-lg font-semibold text-white">
+                  {selectedRoute}
+                </p>
               </div>
 
               {showPotholeMode && (
@@ -169,6 +191,33 @@ export default function HomePage() {
             </div>
           </aside>
         </section>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <StatBadge label="Refusals" value={stats.refusals} />
+          <StatBadge label="Fake money" value={`৳${stats.totalFare}`} />
+          <StatBadge label="Badges" value={stats.badges.length} />
+        </div>
+
+        <div className="mt-6 rounded-[28px] border border-amber-300 bg-white/60 p-4 backdrop-blur-md">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.22em] text-amber-700">
+            <Sparkles className="h-4 w-4" />
+            Unlocks
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {stats.badges.map((badge) => (
+              <span
+                key={badge}
+                className="rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800"
+              >
+                {badge}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <ShareCard route={selectedRoute} fare={fare} text={insultText} />
+        </div>
 
         {showPotholeMode && (
           <div className="mt-6">

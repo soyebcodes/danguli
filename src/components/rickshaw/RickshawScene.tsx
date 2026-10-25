@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { MessageSquareText, MapPinned } from 'lucide-react';
-import { useMemo } from 'react';
+import { motion } from "framer-motion";
+import { MessageSquareText, MapPinned } from "lucide-react";
+import { useMemo } from "react";
 
 type RickshawSceneProps = {
   triggerCount: number;
@@ -51,16 +51,20 @@ export function RickshawScene({
               ? { x: 360, opacity: 0, scale: 0.82 }
               : { x: 0, opacity: 1, scale: 1 }
           }
-          transition={{ duration: 0.8, ease: 'easeInOut' }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
         >
           <motion.div
             className="relative"
             animate={
               isEscaping
-                ? { x: [0, 20, 48, 90], rotate: [0, 3, 10, 15], scale: [1, 1.06, 1.12] }
+                ? {
+                    x: [0, 20, 48, 90],
+                    rotate: [0, 3, 10, 15],
+                    scale: [1, 1.06, 1.12],
+                  }
                 : { x: [-8, 8, -6, 6, 0] }
             }
-            transition={{ duration: isEscaping ? 0.7 : 0.4, ease: 'easeInOut' }}
+            transition={{ duration: isEscaping ? 0.7 : 0.4, ease: "easeInOut" }}
           >
             <div className="relative h-28 w-28 rounded-full bg-amber-200 ring-8 ring-white shadow-xl">
               <div className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-100" />
@@ -76,7 +80,10 @@ export function RickshawScene({
                 ? { x: 0, y: [0, -8, -12], scaleY: [1, 0.96, 0.88] }
                 : { y: [0, -6, 0], rotate: [0, 2, -2, 0] }
             }
-            transition={{ duration: isEscaping ? 0.75 : 0.6, repeat: isEscaping ? 0 : 2 }}
+            transition={{
+              duration: isEscaping ? 0.75 : 0.6,
+              repeat: isEscaping ? 0 : 2,
+            }}
             className="relative -ml-5 h-14 w-40 rounded-[18px] border-4 border-rose-500 bg-rose-400 shadow-lg"
           >
             <div className="absolute left-2 top-2 h-9 w-8 rounded-md bg-yellow-300" />
@@ -106,8 +113,17 @@ export function RickshawScene({
                 key={particle.id}
                 className="absolute left-10 top-12 h-5 w-5 rounded-full bg-amber-200/80"
                 initial={{ opacity: 1, scale: 1, x: 0, y: 0 }}
-                animate={{ opacity: 0, scale: 0.2, x: -particle.x * 3, y: particle.y * 2 }}
-                transition={{ duration: 0.8, delay: particle.delay, ease: 'easeOut' }}
+                animate={{
+                  opacity: 0,
+                  scale: 0.2,
+                  x: -particle.x * 3,
+                  y: particle.y * 2,
+                }}
+                transition={{
+                  duration: 0.8,
+                  delay: particle.delay,
+                  ease: "easeOut",
+                }}
               />
             ))}
         </motion.div>
@@ -115,7 +131,12 @@ export function RickshawScene({
         <motion.div
           initial={{ opacity: 0, y: 16, scale: 0.8 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 15, delay: 0.1 }}
+          transition={{
+            type: "spring",
+            stiffness: 400,
+            damping: 15,
+            delay: 0.1,
+          }}
           className="relative z-10 mx-auto mt-10 max-w-sm rounded-2xl border border-amber-200 bg-white/90 p-4 shadow-lg"
         >
           <div className="mb-2 flex items-center gap-2 text-amber-700">

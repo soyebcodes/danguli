@@ -1,4 +1,4 @@
-import { Howl } from 'howler';
+import { Howl } from "howler";
 
 const createAudioContext = () => {
   const AudioCtor =
@@ -18,7 +18,9 @@ export const playRickshawBell = () => {
     const ctx = createAudioContext();
     if (!ctx) {
       const fallback = new Howl({
-        src: ['data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA='],
+        src: [
+          "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=",
+        ],
       });
       fallback.play();
       return;
@@ -26,7 +28,7 @@ export const playRickshawBell = () => {
 
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
-    oscillator.type = 'triangle';
+    oscillator.type = "triangle";
     oscillator.frequency.value = 780;
     gainNode.gain.value = 0.04;
 
@@ -50,9 +52,12 @@ export const playDustWhistle = () => {
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
 
-    oscillator.type = 'sawtooth';
+    oscillator.type = "sawtooth";
     oscillator.frequency.setValueAtTime(119, ctx.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.16);
+    oscillator.frequency.exponentialRampToValueAtTime(
+      40,
+      ctx.currentTime + 0.16,
+    );
     gainNode.gain.setValueAtTime(0.02, ctx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
 

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Bodies, Body, Engine, Render, Runner, World } from 'matter-js';
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { Bodies, Body, Engine, Render, Runner, World } from "matter-js";
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
@@ -26,8 +26,14 @@ export function PotholeMiniGame() {
       density: 0.004,
       restitution: 0.1,
     });
-    const frontWheel = Bodies.circle(150, 222, 22, { density: 0.003, friction: 0.8 });
-    const rearWheel = Bodies.circle(250, 222, 22, { density: 0.003, friction: 0.8 });
+    const frontWheel = Bodies.circle(150, 222, 22, {
+      density: 0.003,
+      friction: 0.8,
+    });
+    const rearWheel = Bodies.circle(250, 222, 22, {
+      density: 0.003,
+      friction: 0.8,
+    });
 
     const potholes = [
       Bodies.rectangle(120, 250, 50, 24, { isStatic: true }),
@@ -68,7 +74,7 @@ export function PotholeMiniGame() {
         width: 420,
         height: 260,
         wireframes: false,
-        background: 'transparent',
+        background: "transparent",
         pixelRatio: 1,
       },
     });
@@ -81,7 +87,7 @@ export function PotholeMiniGame() {
       Engine.clear(engine);
       Render.stop(render);
       if (root) {
-        root.innerHTML = '';
+        root.innerHTML = "";
       }
     };
   }, []);
@@ -92,7 +98,9 @@ export function PotholeMiniGame() {
     }
 
     const { world } = engineRef.current;
-    const platform = world.bodies.find((body) => body.label === 'Rectangle Body' && body.position.y < 210);
+    const platform = world.bodies.find(
+      (body) => body.label === "Rectangle Body" && body.position.y < 210,
+    );
     if (!platform) {
       return;
     }
@@ -112,11 +120,14 @@ export function PotholeMiniGame() {
           <h3 className="mt-1 text-xl font-bold">Dhaka road challenge</h3>
         </div>
         <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-300">
-          {stable ? 'Stable' : 'Wobbling'}
+          {stable ? "Stable" : "Wobbling"}
         </span>
       </div>
 
-      <div ref={canvasRef} className="h-[260px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950/50" />
+      <div
+        ref={canvasRef}
+        className="h-[260px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950/50"
+      />
 
       <div className="mt-4 space-y-3">
         <div className="h-3 w-full overflow-hidden rounded-full bg-slate-700">
@@ -124,7 +135,7 @@ export function PotholeMiniGame() {
             className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500"
             animate={{ width: `${Math.min(Math.abs(balance) + 25, 100)}%` }}
             transition={{ duration: 0.2 }}
-            style={{ marginLeft: balance < 0 ? 'auto' : '0%' }}
+            style={{ marginLeft: balance < 0 ? "auto" : "0%" }}
           />
         </div>
         <div className="flex gap-3">
