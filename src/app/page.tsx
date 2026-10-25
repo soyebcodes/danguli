@@ -182,6 +182,7 @@ export default function HomePage() {
     insultText,
     isEscaping,
     stats,
+    career,
     soundEnabled,
     volume,
     recentLog,
@@ -195,6 +196,8 @@ export default function HomePage() {
     setVolume,
     registerRefusal,
     unlockBadge,
+    unlockRoute,
+    recordRunSummary,
     logEvent,
     resetStats,
   } = useGameStore();
@@ -363,8 +366,15 @@ export default function HomePage() {
   useEffect(() => {
     if (routeObjectiveComplete) {
       unlockBadge(`${selectedRoute} specialist`);
+      unlockRoute(selectedRoute);
     }
-  }, [routeObjectiveComplete, selectedRoute, unlockBadge]);
+  }, [routeObjectiveComplete, selectedRoute, unlockBadge, unlockRoute]);
+
+  useEffect(() => {
+    if (stats.refusals >= 3) {
+      unlockRoute(selectedRoute);
+    }
+  }, [selectedRoute, stats.refusals, unlockRoute]);
 
   const challengeCards = [
     {
@@ -1337,6 +1347,102 @@ export default function HomePage() {
           </div>
         </section>
 
+        <section className="mt-6 rounded-[28px] border border-slate-200 bg-white/60 p-5 shadow-panel backdrop-blur-md">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-600">
+                Career board
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">City archive</h3>
+            </div>
+            <div className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-700">
+              {career.totalRuns} runs
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Best score</p>
+              <p className="mt-2 text-xl font-black text-slate-900">{career.bestScore}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Route unlocks</p>
+              <p className="mt-2 text-xl font-black text-slate-900">{career.unlockedRoutes.length}/{routeOptions.length}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Top season</p>
+              <p className="mt-2 text-xl font-black text-slate-900">{career.seasonArchive[0]?.season ?? 'No record'}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Current rank</p>
+              <p className="mt-2 text-xl font-black text-slate-900">{cityRank.title}</p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Route unlocks
+              </div>
+              <div className="space-y-3">
+                {routeOptions.map((route) => {
+                  const unlocked = career.unlockedRoutes.includes(route);
+                  return (
+                    <div key={route} className={`rounded-2xl border p-3 ${unlocked ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white/80'}`}>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-semibold text-slate-900">{route}</span>
+                        <span className={`rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${unlocked ? 'border-emerald-300 bg-emerald-100 text-emerald-700' : 'border-slate-200 bg-slate-100 text-slate-500'}`}>
+                          {unlocked ? 'Unlocked' : 'Locked'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Leaderboard
+              </div>
+              <div className="space-y-3">
+                {career.leaderboard.length === 0 ? (
+                  <p className="text-sm text-slate-600">No completed runs yet. Finish a circuit to set the city record.</p>
+                ) : (
+                  career.leaderboard.map((entry, index) => (
+                    <div key={entry.id} className="rounded-2xl border border-slate-200 bg-white/80 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">#{index + 1}</span>
+                        <span className="text-xs font-bold uppercase tracking-[0.18em] text-violet-600">{entry.season}</span>
+                      </div>
+                      <p className="mt-2 text-sm font-black text-slate-900">{entry.route}</p>
+                      <p className="mt-1 text-sm text-slate-700">{entry.score} points • {entry.badge}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Season archive
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {career.seasonArchive.length === 0 ? (
+                <p className="text-sm text-slate-600">No season records yet.</p>
+              ) : (
+                career.seasonArchive.map((season) => (
+                  <div key={season.season} className="rounded-2xl border border-slate-200 bg-white/80 p-3">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{season.season}</p>
+                    <p className="mt-2 text-lg font-black text-slate-900">{season.bestScore}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+
         <section className="mt-6 rounded-[28px] border border-rose-300 bg-gradient-to-br from-rose-100 via-white to-amber-100 p-5 shadow-panel">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
@@ -1446,6 +1552,12 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={() => {
+                  recordRunSummary({
+                    route: selectedRoute,
+                    score: runSummary.finalScore,
+                    season: selectedSeason.name,
+                    badge: cityRank.title,
+                  });
                   setShowRunSummary(false);
                   resetStats();
                 }}

@@ -35,6 +35,28 @@ type RouteChallenge = {
   completed: boolean;
 };
 
+type CareerEntry = {
+  id: string;
+  route: RouteOption;
+  score: number;
+  season: string;
+  date: string;
+  badge: string;
+};
+
+type SeasonArchiveEntry = {
+  season: string;
+  bestScore: number;
+};
+
+type CareerState = {
+  totalRuns: number;
+  bestScore: number;
+  unlockedRoutes: RouteOption[];
+  leaderboard: CareerEntry[];
+  seasonArchive: SeasonArchiveEntry[];
+};
+
 type GameStore = {
   selectedRoute: RouteOption;
   fare: number;
@@ -47,6 +69,7 @@ type GameStore = {
   recentLog: string[];
   currentChallenge: RouteChallenge;
   stats: PlayerStats;
+  career: CareerState;
   setSelectedRoute: (route: RouteOption) => void;
   setFare: (fare: number) => void;
   increaseFare: (by?: number) => void;
@@ -56,8 +79,23 @@ type GameStore = {
   setVolume: (value: number) => void;
   registerRefusal: (fare: number, excuse: string) => void;
   unlockBadge: (badge: string) => void;
+  unlockRoute: (route: RouteOption) => void;
+  recordRunSummary: (summary: {
+    route: RouteOption;
+    score: number;
+    season: string;
+    badge: string;
+  }) => void;
   logEvent: (event: string) => void;
   resetStats: () => void;
+};
+
+const defaultCareer: CareerState = {
+  totalRuns: 0,
+  bestScore: 0,
+  unlockedRoutes: [routeOptions[0]],
+  leaderboard: [],
+  seasonArchive: [],
 };
 
 export const useGameStore = create<GameStore>()(
@@ -74,6 +112,7 @@ export const useGameStore = create<GameStore>()(
       recentLog: ['Session started — the lane is open for chaos.'],
       currentChallenge: createRouteChallenge(routeOptions[0]),
       stats: defaultStats,
+      career: defaultCareer,
       setSelectedRoute: (route) =>
         set((state) => ({
           selectedRoute: route,
@@ -154,6 +193,53 @@ export const useGameStore = create<GameStore>()(
             },
           };
         }),
+      unlockRoute: (route: RouteOption) =>
+        set((state) => {
+          if (state.career.unlockedRoutes.includes(route)) {
+            return state;
+          }
+
+          return {
+            career: {
+              ...state.career,
+              unlockedRoutes: [...state.career.unlockedRoutes, route],
+            },
+          };
+        }),
+      recordRunSummary: ({ route, score, season, badge }) =>
+        set((state) => {
+          const nextUnlockedRoutes = state.career.unlockedRoutes.includes(route)
+            ? state.career.unlockedRoutes
+            : [...state.career.unlockedRoutes, route];
+
+          const nextLeaderboard = [...state.career.leaderboard, {
+            id: `${route}-${Date.now()}`,
+            route,
+            score,
+            season,
+            date: new Date().toISOString(),
+            badge,
+          }].sort((a, b) => b.score - a.score).slice(0, 6);
+
+          const nextSeasonArchive = [...state.career.seasonArchive];
+          const archiveEntry = nextSeasonArchive.find((entry) => entry.season === season);
+
+          if (archiveEntry) {
+            archiveEntry.bestScore = Math.max(archiveEntry.bestScore, score);
+          } else {
+            nextSeasonArchive.push({ season, bestScore: score });
+          }
+
+          return {
+            career: {
+              totalRuns: state.career.totalRuns + 1,
+              bestScore: Math.max(state.career.bestScore, score),
+              unlockedRoutes: nextUnlockedRoutes,
+              leaderboard: nextLeaderboard,
+              seasonArchive: nextSeasonArchive.sort((a, b) => b.bestScore - a.bestScore),
+            },
+          };
+        }),
       logEvent: (event: string) =>
         set((state) => ({
           recentLog: [event, ...state.recentLog].slice(0, 4),
@@ -188,6 +274,7 @@ export const useGameStore = create<GameStore>()(
         recentLog: state.recentLog,
         currentChallenge: state.currentChallenge,
         stats: state.stats,
+        career: state.career,
       }),
     },
   ),
