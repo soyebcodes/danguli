@@ -2,26 +2,32 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, MapPin, PiggyBank, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import { PotholeMiniGame } from "@/components/rickshaw/PotholeMiniGame";
 import { RickshawScene } from "@/components/rickshaw/RickshawScene";
 import { ShareCard } from "@/components/ui/ShareCard";
 import { StatBadge } from "@/components/ui/StatBadge";
 import { refusalExcuses } from "@/data/excuses";
-import { routeOptions, type RouteOption } from "@/data/routes";
-import { usePersistentStats } from "@/hooks/usePersistentStats";
+import { routeOptions } from "@/data/routes";
 import { useSoundFX } from "@/hooks/useSoundFX";
+import { useGameStore } from "@/store/gameStore";
 
 export default function HomePage() {
-  const [selectedRoute, setSelectedRoute] = useState<RouteOption>(
-    routeOptions[0],
-  );
-  const [fare, setFare] = useState(220);
-  const [triggerCount, setTriggerCount] = useState(0);
-  const [insultText, setInsultText] = useState<string>(refusalExcuses[0]);
-  const [isEscaping, setIsEscaping] = useState(false);
-  const { stats, addRefusal } = usePersistentStats();
+  const {
+    selectedRoute,
+    fare,
+    triggerCount,
+    insultText,
+    isEscaping,
+    stats,
+    setSelectedRoute,
+    setFare,
+    increaseFare,
+    setInsultText,
+    setIsEscaping,
+    registerRefusal,
+  } = useGameStore();
   const { playBell, playWhistle } = useSoundFX();
 
   const mood = useMemo(() => {
@@ -41,14 +47,12 @@ export default function HomePage() {
   const showPotholeMode = fare > 250;
 
   const handleReject = () => {
-    setTriggerCount((count) => count + 1);
     const nextExcuse =
       refusalExcuses[Math.floor(Math.random() * refusalExcuses.length)];
     setInsultText(nextExcuse);
-    setIsEscaping(true);
+    registerRefusal(fare, nextExcuse);
     playBell();
     playWhistle();
-    addRefusal(fare);
 
     window.setTimeout(() => setIsEscaping(false), 900);
   };
@@ -100,7 +104,7 @@ export default function HomePage() {
                 <select
                   value={selectedRoute}
                   onChange={(event) =>
-                    setSelectedRoute(event.target.value as RouteOption)
+                    setSelectedRoute(event.target.value as (typeof routeOptions)[number])
                   }
                   className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none transition focus:border-amber-400"
                 >
@@ -153,7 +157,7 @@ export default function HomePage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFare((value) => Math.min(500, value + 25))}
+                  onClick={() => increaseFare(25)}
                   className="rounded-2xl bg-emerald-500 px-4 py-3 font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400"
                 >
                   Increase offer
