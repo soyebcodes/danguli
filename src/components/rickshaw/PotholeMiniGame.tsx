@@ -2,16 +2,28 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Bodies, Body, Engine, Render, Runner, World } from "matter-js";
+import {
+  Bodies,
+  Body,
+  Constraint,
+  Engine,
+  Render,
+  Runner,
+  World,
+  type Body as MatterBody,
+} from "matter-js";
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
 export function PotholeMiniGame() {
   const [balance, setBalance] = useState(0);
-  const [stable, setStable] = useState(true);
+  const [status, setStatus] = useState<"safe" | "wobbling" | "crashed">(
+    "safe",
+  );
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<Engine | null>(null);
+  const bodyRefs = useRef<{ platform?: MatterBody; frontWheel?: MatterBody; rearWheel?: MatterBody }>({});
 
   useEffect(() => {
     if (!canvasRef.current) {
@@ -21,50 +33,62 @@ export function PotholeMiniGame() {
     const engine = Engine.create();
     engineRef.current = engine;
 
-    const ground = Bodies.rectangle(220, 260, 420, 18, { isStatic: true });
-    const rickshawPlatform = Bodies.rectangle(200, 170, 150, 18, {
+    const ground = Bodies.rectangle(220, 260, 430, 18, { isStatic: true });
+    const platform = Bodies.rectangle(210, 170, 170, 18, {
       density: 0.004,
-      restitution: 0.1,
+      friction: 0.75,
+      restitution: 0.12,
     });
-    const frontWheel = Bodies.circle(150, 222, 22, {
-      density: 0.003,
-      friction: 0.8,
+    const frontWheel = Bodies.circle(150, 220, 24, {
+      density: 0.004,
+      friction: 0.9,
+      restitution: 0.08,
     });
-    const rearWheel = Bodies.circle(250, 222, 22, {
-      density: 0.003,
-      friction: 0.8,
+    const rearWheel = Bodies.circle(280, 220, 24, {
+      density: 0.004,
+      friction: 0.9,
+      restitution: 0.08,
+    });
+
+    const leftConstraint = Constraint.create({
+      bodyA: platform,
+      pointA: { x: -60, y: 6 },
+      bodyB: frontWheel,
+      pointB: { x: 0, y: 0 },
+      stiffness: 0.8,
+      damping: 0.2,
+    });
+
+    const rightConstraint = Constraint.create({
+      bodyA: platform,
+      pointA: { x: 60, y: 6 },
+      bodyB: rearWheel,
+      pointB: { x: 0, y: 0 },
+      stiffness: 0.8,
+      damping: 0.2,
     });
 
     const potholes = [
-      Bodies.rectangle(120, 250, 50, 24, { isStatic: true }),
-      Bodies.rectangle(260, 250, 55, 18, { isStatic: true }),
-      Bodies.rectangle(330, 250, 48, 22, { isStatic: true }),
+      Bodies.rectangle(120, 250, 60, 24, { isStatic: true }),
+      Bodies.rectangle(220, 250, 76, 18, { isStatic: true }),
+      Bodies.rectangle(330, 250, 54, 22, { isStatic: true }),
     ];
+
+    bodyRefs.current = {
+      platform,
+      frontWheel,
+      rearWheel,
+    };
 
     World.add(engine.world, [
       ground,
-      rickshawPlatform,
+      platform,
       frontWheel,
       rearWheel,
+      leftConstraint,
+      rightConstraint,
       ...potholes,
     ]);
-
-    const runner = Runner.create();
-    Runner.run(runner, engine);
-
-    const tick = () => {
-      if (!engineRef.current) {
-        return;
-      }
-
-      const angle = rickshawPlatform.angle;
-      const worldBalance = clamp(angle * 80, -100, 100);
-      setBalance(worldBalance);
-      setStable(Math.abs(angle) < 0.35);
-      requestAnimationFrame(tick);
-    };
-
-    const frame = requestAnimationFrame(tick);
 
     const root = canvasRef.current;
     const render = Render.create({
@@ -72,43 +96,67 @@ export function PotholeMiniGame() {
       engine,
       options: {
         width: 420,
-        height: 260,
+        height: 280,
         wireframes: false,
         background: "transparent",
         pixelRatio: 1,
       },
     });
 
+    const runner = Runner.create();
+    Runner.run(runner, engine);
     Render.run(render);
 
+    const tick = () => {
+      if (!engineRef.current) return;
+
+      const platformBody = bodyRefs.current.platform;
+      if (!platformBody) return;
+
+      const angle = platformBody.angle;
+      const nextBalance = clamp(angle * 85, -100, 100);
+      setBalance(nextBalance);
+
+      if (Math.abs(angle) > 0.82) {
+        setStatus("crashed");
+      } else if (Math.abs(angle) > 0.32) {
+        setStatus("wobbling");
+      } else {
+        setStatus("safe");
+      }
+
+      requestAnimationFrame(tick);
+    };
+
+    const animationFrame = requestAnimationFrame(tick);
+
     return () => {
-      cancelAnimationFrame(frame);
+      cancelAnimationFrame(animationFrame);
       World.clear(engine.world, false);
       Engine.clear(engine);
       Render.stop(render);
+      Runner.stop(runner);
       if (root) {
         root.innerHTML = "";
       }
     };
   }, []);
 
-  useEffect(() => {
-    if (!engineRef.current) {
-      return;
-    }
+  const nudgeBalance = (direction: "left" | "right") => {
+    const platform = bodyRefs.current.platform;
+    if (!platform) return;
 
-    const { world } = engineRef.current;
-    const platform = world.bodies.find(
-      (body) => body.label === "Rectangle Body" && body.position.y < 210,
-    );
-    if (!platform) {
-      return;
-    }
+    const torque = direction === "left" ? -0.12 : 0.12;
+    Body.setAngularVelocity(platform, platform.angularVelocity + torque);
+    Body.setAngularVelocity(bodyRefs.current.frontWheel ?? platform, 0.05 * (direction === "left" ? -1 : 1));
+    Body.setAngularVelocity(bodyRefs.current.rearWheel ?? platform, -0.05 * (direction === "left" ? -1 : 1));
+  };
 
-    Body.setAngularVelocity(platform, balance / 900);
-    Body.setAngularVelocity(world.bodies[2], balance / 1600);
-    Body.setAngularVelocity(world.bodies[3], -balance / 1600);
-  }, [balance]);
+  const statusClasses = {
+    safe: "border-emerald-400/40 bg-emerald-500/10 text-emerald-300",
+    wobbling: "border-amber-400/40 bg-amber-500/10 text-amber-300",
+    crashed: "border-rose-400/40 bg-rose-500/10 text-rose-300",
+  } satisfies Record<"safe" | "wobbling" | "crashed", string>;
 
   return (
     <div className="rounded-[28px] border border-amber-400/30 bg-slate-900 p-5 text-white shadow-panel">
@@ -119,37 +167,40 @@ export function PotholeMiniGame() {
           </p>
           <h3 className="mt-1 text-xl font-bold">Dhaka road challenge</h3>
         </div>
-        <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-300">
-          {stable ? "Stable" : "Wobbling"}
+        <span
+          className={`rounded-full border px-2 py-1 text-xs font-semibold uppercase tracking-wide ${statusClasses[status]}`}
+        >
+          {status}
         </span>
       </div>
 
       <div
         ref={canvasRef}
-        className="h-[260px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950/50"
+        className="h-[280px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950/50"
       />
 
       <div className="mt-4 space-y-3">
         <div className="h-3 w-full overflow-hidden rounded-full bg-slate-700">
           <motion.div
             className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500"
-            animate={{ width: `${Math.min(Math.abs(balance) + 25, 100)}%` }}
+            animate={{ width: `${clamp(Math.abs(balance) + 18, 15, 100)}%` }}
             transition={{ duration: 0.2 }}
             style={{ marginLeft: balance < 0 ? "auto" : "0%" }}
           />
         </div>
-        <div className="flex gap-3">
+
+        <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={() => setBalance((value) => clamp(value - 18, -100, 100))}
-            className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-white transition hover:bg-white/10"
+            onClick={() => nudgeBalance("left")}
+            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-white transition hover:bg-white/10"
           >
             Lean left
           </button>
           <button
             type="button"
-            onClick={() => setBalance((value) => clamp(value + 18, -100, 100))}
-            className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-white transition hover:bg-white/10"
+            onClick={() => nudgeBalance("right")}
+            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-white transition hover:bg-white/10"
           >
             Lean right
           </button>
