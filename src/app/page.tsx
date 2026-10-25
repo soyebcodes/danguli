@@ -191,6 +191,18 @@ export default function HomePage() {
     stats.refusals * 180 + stats.totalFare * 2 + bestStreak * 120,
   );
   const comboMultiplier = (1 + Math.min(bestStreak, 10) / 10).toFixed(1);
+  const momentum = Math.min(
+    100,
+    Math.round(bestStreak * 18 + triggerCount * 8 + routePressure * 0.45),
+  );
+  const momentumLabel =
+    momentum < 35 ? 'Calm lane' : momentum < 70 ? 'Rising heat' : 'Street riot';
+  const momentumTone =
+    momentum < 35
+      ? 'from-slate-400 to-slate-500'
+      : momentum < 70
+        ? 'from-emerald-400 to-amber-400'
+        : 'from-rose-500 to-orange-500';
   const activeStory = routeProfile.story[storyIndex % routeProfile.story.length];
 
   const challengeDeck = [
@@ -667,6 +679,10 @@ export default function HomePage() {
                 <span>style</span>
                 <span className="font-bold text-rose-300">{selectedStyle.name}</span>
               </div>
+              <div className="flex items-center justify-between">
+                <span>momentum</span>
+                <span className="font-bold text-amber-300">{momentumLabel}</span>
+              </div>
             </div>
           </div>
         </section>
@@ -824,6 +840,34 @@ export default function HomePage() {
           </div>
 
           <p className="mt-4 text-sm leading-6 text-slate-700">{selectedStyle.flair}</p>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-amber-300 bg-gradient-to-br from-amber-100 via-white to-orange-100 p-5 shadow-panel">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
+                Crowd energy
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">{momentumLabel}</h3>
+            </div>
+            <div className="rounded-full border border-amber-300 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
+              {momentum}%
+            </div>
+          </div>
+
+          <div className="mt-4 h-3 overflow-hidden rounded-full bg-amber-100">
+            <div
+              className={`h-full rounded-full bg-gradient-to-r ${momentumTone} transition-all duration-300`}
+              style={{ width: `${momentum}%` }}
+            />
+          </div>
+          <p className="mt-3 text-sm text-slate-700">
+            {momentum < 35
+              ? 'The lane is cool and easy to control.'
+              : momentum < 70
+                ? 'The crowd is starting to feel the tension.'
+                : 'The road is boiling—every bar is a risk and every refusal is a statement.'}
+          </p>
         </section>
 
         <section className="mt-6 rounded-[28px] border border-amber-300 bg-white/60 p-4 backdrop-blur-md">
