@@ -70,6 +70,26 @@ export default function HomePage() {
     stats.refusals * 180 + stats.totalFare * 2 + bestStreak * 120,
   );
   const comboMultiplier = (1 + Math.min(bestStreak, 10) / 10).toFixed(1);
+  const challengeDeck = [
+    {
+      label: 'Cash gate',
+      unlocked: stats.totalFare >= 600,
+      reward: '৳600+ fake money',
+      copy: 'Keep the fare high enough to trigger a traffic scene.',
+    },
+    {
+      label: 'Crowd holdout',
+      unlocked: bestStreak >= 4,
+      reward: '4-turn streak',
+      copy: 'Refuse back-to-back riders without breaking momentum.',
+    },
+    {
+      label: 'Road boss',
+      unlocked: routePressure >= 75,
+      reward: 'route pressure above 75%',
+      copy: 'Push this route into peak traffic chaos and survive.',
+    },
+  ];
 
   useEffect(() => {
     if (routeObjectiveComplete) {
@@ -485,6 +505,44 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-violet-300 bg-gradient-to-br from-violet-100 via-white to-amber-100 p-5 shadow-panel">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
+                Challenge deck
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">
+                Route boss goals
+              </h3>
+            </div>
+            <div className="rounded-full border border-violet-300 bg-white/70 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-violet-700">
+              {challengeDeck.filter((goal) => goal.unlocked).length}/{challengeDeck.length}
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {challengeDeck.map((goal) => (
+              <div
+                key={goal.label}
+                className={`rounded-2xl border p-4 ${
+                  goal.unlocked
+                    ? 'border-emerald-300 bg-emerald-50/80'
+                    : 'border-white/75 bg-white/70'
+                }`}
+              >
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
+                  {goal.label}
+                </p>
+                <p className="mt-2 text-lg font-black text-slate-900">{goal.reward}</p>
+                <p className="mt-2 text-sm text-slate-700">{goal.copy}</p>
+                <div className="mt-3 inline-flex rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700">
+                  {goal.unlocked ? 'Complete' : 'Open'}
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="mt-6 rounded-[28px] border border-rose-300 bg-gradient-to-br from-rose-100 via-white to-amber-100 p-5 shadow-panel">
