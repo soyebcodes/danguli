@@ -27,6 +27,7 @@ export default function HomePage() {
     setInsultText,
     setIsEscaping,
     registerRefusal,
+    resetStats,
   } = useGameStore();
   const { playBell, playWhistle } = useSoundFX();
 
@@ -64,19 +65,31 @@ export default function HomePage() {
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between"
+          className="mb-8 rounded-[30px] border-4 border-amber-300 bg-white/70 p-5 shadow-panel backdrop-blur-sm"
         >
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-rose-500">
-              Bangladesh ride refusal simulator
-            </p>
-            <h1 className="mt-2 text-4xl font-black text-slate-900 md:text-5xl">
-              Amader Rickshaw Mama
-            </h1>
-          </div>
-          <div className="rounded-full border border-amber-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
-            Refusal streak:{" "}
-            <span className="font-bold text-rose-500">{triggerCount}</span>
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-rose-500">
+                Bangladesh ride refusal simulator
+              </p>
+              <h1 className="mt-2 text-4xl font-black text-slate-900 md:text-5xl">
+                Amader Rickshaw Mama
+              </h1>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="rounded-full border border-amber-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
+                Refusal streak:{" "}
+                <span className="font-bold text-rose-500">{triggerCount}</span>
+              </div>
+              <button
+                type="button"
+                onClick={resetStats}
+                className="rounded-full border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-700 transition hover:bg-slate-200"
+              >
+                Reset
+              </button>
+            </div>
           </div>
         </motion.header>
 

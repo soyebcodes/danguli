@@ -28,6 +28,7 @@ type GameStore = {
   setInsultText: (text: string) => void;
   setIsEscaping: (value: boolean) => void;
   registerRefusal: (fare: number, excuse: string) => void;
+  resetStats: () => void;
 };
 
 export const useGameStore = create<GameStore>()(
@@ -70,6 +71,17 @@ export const useGameStore = create<GameStore>()(
               badges: nextBadges,
             },
           };
+        }),
+      resetStats: () =>
+        set({
+          triggerCount: 0,
+          insultText: 'পাহাড়তলী যাইতাম না, ভাই! গ্যারেজের ভেতর ঠেকাইয়া দিছি।',
+          isEscaping: false,
+          stats: {
+            refusals: 0,
+            totalFare: 0,
+            badges: ['First refusal'],
+          },
         }),
     }),
     {
