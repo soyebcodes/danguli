@@ -47,7 +47,40 @@ export default function HomePage() {
   }, [fare]);
 
   const showPotholeMode = fare > 250;
-  const routePressure = Math.min(100, Math.round((routeProfile.demand + fare / 5) / 1.65));
+  const routePressure = Math.min(
+    100,
+    Math.round((routeProfile.demand + fare / 5) / 1.65),
+  );
+
+  const challengeCards = [
+    {
+      title: 'Refusal streak',
+      value: triggerCount,
+      target: 5,
+      suffix: 'runs',
+      hint: 'Keep the traffic lane blocked.',
+      tone: 'from-rose-500 to-pink-500',
+    },
+    {
+      title: 'Fake fare bank',
+      value: stats.totalFare,
+      target: 2000,
+      suffix: '৳',
+      hint: 'Stack enough fake money to impress everyone.',
+      tone: 'from-amber-500 to-yellow-400',
+    },
+    {
+      title: 'Route heat',
+      value: routePressure,
+      target: 90,
+      suffix: '%',
+      hint: `${selectedRoute} is feeling the pressure.`,
+      tone: 'from-emerald-500 to-teal-500',
+    },
+  ].map((challenge) => ({
+    ...challenge,
+    progress: Math.min(100, Math.round((challenge.value / challenge.target) * 100)),
+  }));
 
   const handleReject = () => {
     const nextExcuse = getRandomExcuseForRoute(selectedRoute);
@@ -255,6 +288,51 @@ export default function HomePage() {
             ))}
           </div>
         </div>
+
+        <section className="mt-6 rounded-[28px] border border-slate-200 bg-slate-900 p-5 text-white shadow-panel md:p-6">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-300">
+                Mission board
+              </p>
+              <h3 className="mt-2 text-2xl font-black">Street challenge tracker</h3>
+            </div>
+            <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-200">
+              live
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {challengeCards.map((challenge) => (
+              <div
+                key={challenge.title}
+                className="rounded-[22px] border border-white/10 bg-white/5 p-4"
+              >
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-slate-200">
+                    {challenge.title}
+                  </p>
+                  <span className="text-xs font-bold uppercase tracking-[0.16em] text-amber-300">
+                    {challenge.value}
+                    {challenge.suffix}
+                  </span>
+                </div>
+
+                <div className="h-2.5 overflow-hidden rounded-full bg-slate-700/80">
+                  <div
+                    className={`h-full rounded-full bg-gradient-to-r ${challenge.tone}`}
+                    style={{ width: `${challenge.progress}%` }}
+                  />
+                </div>
+
+                <p className="mt-3 text-xs uppercase tracking-[0.18em] text-slate-400">
+                  {challenge.progress}% / 100%
+                </p>
+                <p className="mt-2 text-sm text-slate-300">{challenge.hint}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <div className="mt-6">
           <ShareCard route={selectedRoute} fare={fare} text={insultText} />
