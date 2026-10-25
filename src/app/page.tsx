@@ -177,6 +177,30 @@ const ambiencePresets = [
   },
 ] as const;
 
+const cosmeticThemes = [
+  {
+    name: 'Rickshaw red',
+    background: 'linear-gradient(135deg, #fff7ed 0%, #fee2e2 32%, #fecaca 100%)',
+    accent: '#ef4444',
+    glow: 'rgba(239, 68, 68, 0.18)',
+    note: 'Classic painted tin-plate energy with roadside heat.',
+  },
+  {
+    name: 'Night neon',
+    background: 'linear-gradient(135deg, #020617 0%, #111827 35%, #0f172a 100%)',
+    accent: '#22c55e',
+    glow: 'rgba(34, 197, 94, 0.18)',
+    note: 'Late city glow with a sharper, cooler edge.',
+  },
+  {
+    name: 'Monsoon silver',
+    background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 38%, #bfdbfe 100%)',
+    accent: '#3b82f6',
+    glow: 'rgba(59, 130, 246, 0.14)',
+    note: 'Cool rain-slick shades with a softer urban mood.',
+  },
+] as const;
+
 const refusalStyles = [
   {
     name: 'Deadpan',
@@ -237,9 +261,11 @@ export default function HomePage() {
   const [selectedStyle, setSelectedStyle] = useState<(typeof refusalStyles)[number]>(refusalStyles[0]);
   const [selectedSeason, setSelectedSeason] = useState<(typeof citySeasons)[number]>(citySeasons[1]);
   const [selectedAmbience, setSelectedAmbience] = useState<(typeof ambiencePresets)[number]>(ambiencePresets[0]);
+  const [selectedTheme, setSelectedTheme] = useState<(typeof cosmeticThemes)[number]>(cosmeticThemes[0]);
   const [selectedIncident, setSelectedIncident] = useState<(typeof cityIncidents)[number]>(cityIncidents[0]);
   const [storyIndex, setStoryIndex] = useState(0);
   const [showRunSummary, setShowRunSummary] = useState(false);
+  const [bossEncounterOpen, setBossEncounterOpen] = useState(false);
 
   useEffect(() => {
     setStoryIndex(0);
@@ -382,6 +408,17 @@ export default function HomePage() {
     boxShadow: `0 22px 60px ${selectedAmbience.glow}`,
   } as const;
   const activeStory = routeProfile.story[storyIndex % routeProfile.story.length];
+  const routeSummaries = routeOptions.map((route) => ({
+    route,
+    legend: routeProfiles[route].legend,
+    zone: routeProfiles[route].zone,
+    vibe: routeProfiles[route].vibe,
+  }));
+  const bossEncounter = {
+    name: `${selectedRoute.split('→')[0].trim()} boss`,
+    pressure: Math.min(100, routePressure + 10),
+    detail: `This route warlord is testing whether you can hold the lane against ${selectedRoute}.`,
+  };
 
   const challengeDeck = [
     {
@@ -490,6 +527,29 @@ export default function HomePage() {
     }
   }, [selectedRider.name, unlockedRiders]);
 
+  useEffect(() => {
+    if (routePressure >= 80) {
+      setBossEncounterOpen(true);
+    }
+  }, [routePressure]);
+
+  const handleBossResolve = (choice: 'hold' | 'counter' | 'dodge') => {
+    const bossPower = routePressure + selectedStyle.bonus * 25 + selectedRider.bonus * 18;
+    const victory =
+      (choice === 'hold' && bossPower >= 100) ||
+      (choice === 'counter' && bossPower >= 95) ||
+      (choice === 'dodge' && bossPower >= 90);
+
+    if (victory) {
+      unlockBadge(`${selectedRoute.split('→')[0].trim()} boss breaker`);
+      logEvent(`${selectedRoute} warlord defeated with a ${selectedStyle.name.toLowerCase()} line.`);
+    } else {
+      logEvent(`${selectedRoute} warlord pushed back the lane and raised the cost.`);
+    }
+
+    setBossEncounterOpen(false);
+  };
+
   const handleReject = () => {
     const nextExcuse = getRandomExcuseForRoute(selectedRoute);
     const effectiveFare = Math.min(
@@ -522,7 +582,11 @@ export default function HomePage() {
   return (
     <main
       className="min-h-screen px-4 py-8 md:px-8"
-      style={ambienceStyle}
+      style={{
+        ...ambienceStyle,
+        background: selectedTheme.background,
+        boxShadow: `0 22px 60px ${selectedTheme.glow}`,
+      }}
     >
       <div className="mx-auto max-w-6xl">
         <motion.header
@@ -927,6 +991,43 @@ export default function HomePage() {
                 </div>
                 <p className={`text-xs ${selectedAmbience.name === preset.name ? 'text-slate-200' : 'text-slate-600'}`}>
                   {preset.description}
+                </p>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-white/60 bg-white/60 p-5 shadow-panel backdrop-blur-md">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-600">
+                Cosmetic garage
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">Theme unlocks</h3>
+            </div>
+            <div className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-700">
+              {selectedTheme.name}
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {cosmeticThemes.map((theme) => (
+              <button
+                key={theme.name}
+                type="button"
+                onClick={() => setSelectedTheme(theme)}
+                className={`rounded-[22px] border p-3 text-left transition ${
+                  selectedTheme.name === theme.name
+                    ? 'border-slate-900 bg-slate-900 text-white shadow-lg'
+                    : 'border-white/70 bg-white/70 text-slate-700 hover:border-slate-300'
+                }`}
+                style={{ background: theme.background }}
+              >
+                <div className="mb-2 flex items-center justify-between gap-4">
+                  <span className="text-sm font-bold">{theme.name}</span>
+                  <span className="h-3 w-3 rounded-full" style={{ background: theme.accent }} />
+                </div>
+                <p className={`text-xs ${selectedTheme.name === theme.name ? 'text-slate-200' : 'text-slate-600'}`}>
+                  {theme.note}
                 </p>
               </button>
             ))}
@@ -1469,6 +1570,63 @@ export default function HomePage() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
+                Route boss encounter
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">{bossEncounter.name}</h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setBossEncounterOpen(true)}
+              className="rounded-full border border-violet-300 bg-white/80 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700"
+            >
+              Open duel
+            </button>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/80 bg-white/80 p-4">
+            <div className="mb-2 flex items-center justify-between text-sm font-medium text-slate-700">
+              <span>Boss pressure</span>
+              <span className="font-bold text-violet-700">{bossEncounter.pressure}%</span>
+            </div>
+            <div className="h-3 overflow-hidden rounded-full bg-violet-100">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500 transition-all duration-300"
+                style={{ width: `${bossEncounter.pressure}%` }}
+              />
+            </div>
+            <p className="mt-3 text-sm text-slate-700">{bossEncounter.detail}</p>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-violet-300 bg-gradient-to-br from-violet-100 via-white to-amber-100 p-5 shadow-panel">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
+                Route lore cards
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">City story deck</h3>
+            </div>
+            <div className="rounded-full border border-violet-300 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-violet-700">
+              {routeSummaries.length} routes
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {routeSummaries.map((summary) => (
+              <div key={summary.route} className="rounded-[22px] border border-white/80 bg-white/80 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{summary.zone}</p>
+                <p className="mt-2 text-lg font-black text-slate-900">{summary.route}</p>
+                <p className="mt-2 text-sm text-slate-700">{summary.vibe}</p>
+                <p className="mt-3 text-xs italic text-violet-700">“{summary.legend}”</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-violet-300 bg-gradient-to-br from-violet-100 via-white to-amber-100 p-5 shadow-panel">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
                 City season
               </p>
               <h3 className="mt-2 text-2xl font-black text-slate-900">{selectedSeason.name}</h3>
@@ -1652,6 +1810,74 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      {bossEncounterOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm"
+        >
+          <motion.div
+            initial={{ scale: 0.96, y: 12 }}
+            animate={{ scale: 1, y: 0 }}
+            className="w-full max-w-xl rounded-[30px] border border-violet-300 bg-white p-6 shadow-2xl"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
+                  Boss duel
+                </p>
+                <h3 className="mt-2 text-3xl font-black text-slate-900">{bossEncounter.name}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBossEncounterOpen(false)}
+                className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-violet-200 bg-violet-50 p-4">
+              <div className="mb-2 flex items-center justify-between text-sm font-medium text-slate-700">
+                <span>Boss pressure</span>
+                <span className="font-bold text-violet-700">{bossEncounter.pressure}%</span>
+              </div>
+              <div className="h-2.5 overflow-hidden rounded-full bg-violet-200">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500"
+                  style={{ width: `${bossEncounter.pressure}%` }}
+                />
+              </div>
+              <p className="mt-3 text-sm text-slate-700">{bossEncounter.detail}</p>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <button
+                type="button"
+                onClick={() => handleBossResolve('hold')}
+                className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white"
+              >
+                Hold line
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBossResolve('counter')}
+                className="rounded-2xl bg-amber-500 px-4 py-3 text-sm font-bold text-slate-900"
+              >
+                Counter
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBossResolve('dodge')}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700"
+              >
+                Dodge
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
 
       {showRunSummary && (
         <motion.div
