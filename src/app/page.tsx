@@ -75,6 +75,11 @@ export default function HomePage() {
   const routeProfile = routeProfiles[selectedRoute];
   const [routeEvent, setRouteEvent] = useState<(typeof streetEvents)[number]>(streetEvents[0]);
   const [selectedTactic, setSelectedTactic] = useState<(typeof tactics)[number]>(tactics[0]);
+  const [storyIndex, setStoryIndex] = useState(0);
+
+  useEffect(() => {
+    setStoryIndex(0);
+  }, [selectedRoute]);
 
   const mood = useMemo(() => {
     if (fare <= 40) {
@@ -110,6 +115,8 @@ export default function HomePage() {
     stats.refusals * 180 + stats.totalFare * 2 + bestStreak * 120,
   );
   const comboMultiplier = (1 + Math.min(bestStreak, 10) / 10).toFixed(1);
+  const activeStory = routeProfile.story[storyIndex % routeProfile.story.length];
+
   const challengeDeck = [
     {
       label: 'Cash gate',
@@ -179,6 +186,7 @@ export default function HomePage() {
     logEvent(
       `${selectedTactic.label} on ${selectedRoute}: ${routeEvent.name} is active.`,
     );
+    setStoryIndex((current) => (current + 1) % routeProfile.story.length);
     playBell();
     playWhistle();
 
@@ -605,6 +613,34 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-violet-300 bg-gradient-to-br from-violet-100 via-white to-amber-100 p-5 shadow-panel">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
+                Street rumor board
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">
+                {selectedRoute} legend
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStoryIndex((current) => (current + 1) % routeProfile.story.length)}
+              className="rounded-full border border-violet-300 bg-white/80 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700"
+            >
+              Next rumor
+            </button>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/80 bg-white/80 p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+              Route lore
+            </p>
+            <p className="mt-3 text-xl font-black text-slate-900">{routeProfile.legend}</p>
+            <p className="mt-3 text-sm leading-6 text-slate-700">{activeStory}</p>
+          </div>
         </section>
 
         <section className="mt-6 rounded-[28px] border border-violet-300 bg-gradient-to-br from-violet-100 via-white to-amber-100 p-5 shadow-panel">
