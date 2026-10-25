@@ -25,6 +25,7 @@ export default function HomePage() {
     soundEnabled,
     volume,
     recentLog,
+    currentChallenge,
     setSelectedRoute,
     setFare,
     increaseFare,
@@ -63,6 +64,10 @@ export default function HomePage() {
   const routeObjectiveProgress = Math.min(
     100,
     Math.round((triggerCount / routeObjectiveTarget) * 100),
+  );
+  const campaignProgress = Math.min(
+    100,
+    Math.round((currentChallenge.progress / currentChallenge.target) * 100),
   );
   const routeObjectiveComplete = triggerCount >= routeObjectiveTarget;
   const reputationScore = Math.min(
@@ -542,6 +547,40 @@ export default function HomePage() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-violet-300 bg-gradient-to-br from-violet-50 via-white to-amber-50 p-5 shadow-panel">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
+                Active route campaign
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">{currentChallenge.title}</h3>
+            </div>
+            <div className="rounded-full border border-violet-300 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-violet-700">
+              {currentChallenge.completed ? 'Cleared' : 'Live'}
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/80 bg-white/80 p-4">
+            <div className="mb-2 flex items-center justify-between text-sm font-medium text-slate-700">
+              <span>
+                {currentChallenge.progress}/{currentChallenge.target} refusals
+              </span>
+              <span className="font-bold text-violet-700">{campaignProgress}%</span>
+            </div>
+            <div className="h-3 overflow-hidden rounded-full bg-violet-100">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500 transition-all duration-300"
+                style={{ width: `${campaignProgress}%` }}
+              />
+            </div>
+            <p className="mt-3 text-sm text-slate-700">
+              {currentChallenge.completed
+                ? `Campaign cleared: ${currentChallenge.reward} unlocked.`
+                : `Complete the route challenge to unlock ${currentChallenge.reward}.`}
+            </p>
           </div>
         </section>
 

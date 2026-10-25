@@ -1,7 +1,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { type RouteOption, routeOptions } from '@/data/routes';
+import { type RouteOption, routeOptions, routeProfiles } from '@/data/routes';
+
+const createRouteChallenge = (route: RouteOption) => ({
+  id: `route-${route}`,
+  route,
+  title: `${route} campaign`,
+  target: Math.max(3, Math.round(routeProfiles[route].demand / 25)),
+  progress: 0,
+  reward: `${route} specialist`,
+  completed: false,
+});
 
 type PlayerStats = {
   refusals: number;
@@ -15,6 +25,16 @@ const defaultStats: PlayerStats = {
   badges: ['First refusal'],
 };
 
+type RouteChallenge = {
+  id: string;
+  route: RouteOption;
+  title: string;
+  target: number;
+  progress: number;
+  reward: string;
+  completed: boolean;
+};
+
 type GameStore = {
   selectedRoute: RouteOption;
   fare: number;
@@ -25,6 +45,7 @@ type GameStore = {
   soundEnabled: boolean;
   volume: number;
   recentLog: string[];
+  currentChallenge: RouteChallenge;
   stats: PlayerStats;
   setSelectedRoute: (route: RouteOption) => void;
   setFare: (fare: number) => void;
@@ -51,8 +72,16 @@ export const useGameStore = create<GameStore>()(
       soundEnabled: true,
       volume: 70,
       recentLog: ['Session started — the lane is open for chaos.'],
+      currentChallenge: createRouteChallenge(routeOptions[0]),
       stats: defaultStats,
-      setSelectedRoute: (route) => set({ selectedRoute: route }),
+      setSelectedRoute: (route) =>
+        set((state) => ({
+          selectedRoute: route,
+          currentChallenge:
+            state.selectedRoute === route
+              ? state.currentChallenge
+              : createRouteChallenge(route),
+        })),
       setFare: (fare) => set({ fare: Math.max(20, Math.min(500, fare)) }),
       increaseFare: (by = 25) =>
         set((state) => ({
@@ -76,6 +105,19 @@ export const useGameStore = create<GameStore>()(
           }
 
           const nextTriggerCount = state.triggerCount + 1;
+          const nextChallengeProgress =
+            state.currentChallenge.route === state.selectedRoute
+              ? Math.min(
+                  state.currentChallenge.target,
+                  state.currentChallenge.progress + 1,
+                )
+              : state.currentChallenge.progress;
+          const nextChallengeCompleted =
+            nextChallengeProgress >= state.currentChallenge.target;
+
+          if (nextChallengeCompleted && !nextBadges.includes(state.currentChallenge.reward)) {
+            nextBadges.push(state.currentChallenge.reward);
+          }
 
           return {
             triggerCount: nextTriggerCount,
@@ -86,6 +128,11 @@ export const useGameStore = create<GameStore>()(
               `Refused ${fare}৳ on ${state.selectedRoute} — the street won this round.`,
               ...state.recentLog,
             ].slice(0, 4),
+            currentChallenge: {
+              ...state.currentChallenge,
+              progress: nextChallengeProgress,
+              completed: nextChallengeCompleted,
+            },
             stats: {
               refusals: nextRefusals,
               totalFare: nextTotalFare,
@@ -120,6 +167,7 @@ export const useGameStore = create<GameStore>()(
           soundEnabled: true,
           volume: 70,
           recentLog: ['Session reset — the lane is ready for another negotiation.'],
+          currentChallenge: createRouteChallenge(routeOptions[0]),
           stats: {
             refusals: 0,
             totalFare: 0,
@@ -138,6 +186,7 @@ export const useGameStore = create<GameStore>()(
         soundEnabled: state.soundEnabled,
         volume: state.volume,
         recentLog: state.recentLog,
+        currentChallenge: state.currentChallenge,
         stats: state.stats,
       }),
     },
