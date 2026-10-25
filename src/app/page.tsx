@@ -218,6 +218,28 @@ export default function HomePage() {
     9999,
     stats.refusals * 180 + stats.totalFare * 2 + bestStreak * 120,
   );
+  const cityMilestones = [
+    { title: 'Street rookie', threshold: 0, detail: 'The lane still thinks you are testing the waters.' },
+    { title: 'Lane legend', threshold: 8, detail: 'Your refusal game has become a neighborhood myth.' },
+    { title: 'Route boss', threshold: 20, detail: 'Drivers in this city know your name before you speak.' },
+    { title: 'City icon', threshold: 35, detail: 'Every rider is now reading the room before the bargain even starts.' },
+  ] as const;
+  let cityRankIndex = 0;
+  for (let index = cityMilestones.length - 1; index >= 0; index -= 1) {
+    if (stats.refusals >= cityMilestones[index].threshold) {
+      cityRankIndex = index;
+      break;
+    }
+  }
+  const cityRank = cityMilestones[cityRankIndex];
+  const nextMilestone =
+    cityRankIndex < cityMilestones.length - 1
+      ? cityMilestones[cityRankIndex + 1]
+      : null;
+  const cityControl = Math.min(
+    100,
+    Math.round((stats.refusals * 10 + bestStreak * 12 + routePressure * 0.55) / 1.4),
+  );
   const comboMultiplier = (1 + Math.min(bestStreak, 10) / 10).toFixed(1);
   const momentum = Math.min(
     100,
@@ -1035,6 +1057,51 @@ export default function HomePage() {
                 ? `Campaign cleared: ${currentChallenge.reward} unlocked.`
                 : `Complete the route challenge to unlock ${currentChallenge.reward}.`}
             </p>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-violet-300 bg-gradient-to-br from-violet-100 via-white to-amber-100 p-5 shadow-panel">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
+                City campaign
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">{cityRank.title}</h3>
+            </div>
+            <div className="rounded-full border border-violet-300 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-violet-700">
+              {cityControl}% control
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/80 bg-white/80 p-4">
+            <div className="mb-2 flex items-center justify-between text-sm font-medium text-slate-700">
+              <span>City control meter</span>
+              <span className="font-bold text-violet-700">{cityControl}%</span>
+            </div>
+            <div className="h-3 overflow-hidden rounded-full bg-violet-100">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500 transition-all duration-300"
+                style={{ width: `${cityControl}%` }}
+              />
+            </div>
+            <p className="mt-3 text-sm text-slate-700">{cityRank.detail}</p>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-white/70 bg-white/60 p-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Current route</p>
+              <p className="mt-2 text-lg font-black text-slate-900">{selectedRoute}</p>
+            </div>
+            <div className="rounded-2xl border border-white/70 bg-white/60 p-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Refusal count</p>
+              <p className="mt-2 text-lg font-black text-slate-900">{stats.refusals}</p>
+            </div>
+            <div className="rounded-2xl border border-white/70 bg-white/60 p-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Next milestone</p>
+              <p className="mt-2 text-lg font-black text-slate-900">
+                {nextMilestone ? nextMilestone.title : 'City icon'}
+              </p>
+            </div>
           </div>
         </section>
 
