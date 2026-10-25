@@ -6,9 +6,13 @@ type ShareCardProps = {
   route: string;
   fare: number;
   text: string;
+  season: string;
+  streak: number;
+  badge: string;
+  score: number;
 };
 
-export function ShareCard({ route, fare, text }: ShareCardProps) {
+export function ShareCard({ route, fare, text, season, streak, badge, score }: ShareCardProps) {
   const createDownload = () => {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
@@ -36,16 +40,21 @@ export function ShareCard({ route, fare, text }: ShareCardProps) {
     context.font = '600 32px Arial';
     context.fillText(`Route: ${route}`, 140, 320);
     context.fillText(`Offer: ৳${fare}`, 140, 380);
+    context.fillText(`Season: ${season}`, 140, 440);
+    context.fillText(`Streak: ${streak}`, 140, 500);
+    context.fillText(`Badge: ${badge}`, 140, 560);
 
     context.font = '600 44px Arial';
     const wrapped = text.length > 52 ? `${text.slice(0, 52)}...` : text;
-    context.fillText(wrapped, 140, 520, 900);
+    context.fillText(wrapped, 140, 660, 900);
 
     context.fillStyle = '#facc15';
-    context.fillRect(140, 760, 260, 90);
+    context.fillRect(140, 760, 340, 90);
     context.fillStyle = '#111827';
     context.font = '700 36px Arial';
-    context.fillText('REFUSED!', 180, 820);
+    context.fillText(`Score: ${score}`, 180, 820);
+    context.font = '700 34px Arial';
+    context.fillText('REFUSED!', 180, 900);
 
     const link = document.createElement('a');
     link.href = canvas.toDataURL('image/png');

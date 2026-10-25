@@ -40,6 +40,33 @@ const streetEvents = [
   },
 ] as const;
 
+const cityIncidents = [
+  {
+    name: 'Broken brake light',
+    mood: 'Someone is impatient enough to argue over a tiny delay.',
+    modifier: 15,
+    accent: 'text-rose-300',
+  },
+  {
+    name: 'Street prayer call',
+    mood: 'The call pauses the lane for a second and everyone gets dramatic.',
+    modifier: 12,
+    accent: 'text-amber-300',
+  },
+  {
+    name: 'Roadside gossip',
+    mood: 'A crowd starts narrating your refusal like it is a neighborhood event.',
+    modifier: 22,
+    accent: 'text-violet-300',
+  },
+  {
+    name: 'Cooling breeze',
+    mood: 'A calmer moment lets you hold the line without extra noise.',
+    modifier: -8,
+    accent: 'text-cyan-300',
+  },
+] as const;
+
 const tactics = [
   { label: 'Hold the line', bonus: 1, note: 'Steady refusal with no extra noise.' },
   { label: 'Break the rhythm', bonus: 1.25, note: 'Mute the rider, then drag the argument out.' },
@@ -210,6 +237,7 @@ export default function HomePage() {
   const [selectedStyle, setSelectedStyle] = useState<(typeof refusalStyles)[number]>(refusalStyles[0]);
   const [selectedSeason, setSelectedSeason] = useState<(typeof citySeasons)[number]>(citySeasons[1]);
   const [selectedAmbience, setSelectedAmbience] = useState<(typeof ambiencePresets)[number]>(ambiencePresets[0]);
+  const [selectedIncident, setSelectedIncident] = useState<(typeof cityIncidents)[number]>(cityIncidents[0]);
   const [storyIndex, setStoryIndex] = useState(0);
   const [showRunSummary, setShowRunSummary] = useState(false);
 
@@ -292,6 +320,19 @@ export default function HomePage() {
       focus: route === selectedRoute ? 'Hot lane' : 'City lane',
     };
   });
+  const unlockedRiders = useMemo(() => {
+    const availability = riderArchetypes.filter((rider, index) => {
+      if (index === 0) return true;
+      if (bestStreak >= index + 1) return true;
+      return stats.refusals >= index * 4 + 5;
+    });
+
+    return new Set(availability.map((rider) => rider.name));
+  }, [bestStreak, stats.refusals]);
+  const seasonLeaderboard = useMemo(
+    () => career.leaderboard.filter((entry) => entry.season === selectedSeason.name),
+    [career.leaderboard, selectedSeason.name],
+  );
   const routeBosses = routeOptions.map((route) => ({
     route,
     boss: `${route.split('→')[0].trim()} boss`,
@@ -443,6 +484,12 @@ export default function HomePage() {
     [bestStreak, routePressure, stats.totalFare],
   );
 
+  useEffect(() => {
+    if (!unlockedRiders.has(selectedRider.name)) {
+      setSelectedRider(riderArchetypes[0]);
+    }
+  }, [selectedRider.name, unlockedRiders]);
+
   const handleReject = () => {
     const nextExcuse = getRandomExcuseForRoute(selectedRoute);
     const effectiveFare = Math.min(
@@ -450,7 +497,7 @@ export default function HomePage() {
       Math.max(
         20,
         Math.round(
-          (fare + routeEvent.modifier) *
+          (fare + routeEvent.modifier + selectedIncident.modifier) *
             selectedTactic.bonus *
             selectedRider.bonus *
             selectedShift.bonus *
@@ -628,6 +675,30 @@ export default function HomePage() {
                 </p>
               </div>
 
+              <div className="rounded-2xl border border-violet-400/30 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 p-4">
+                <div className="mb-3 text-sm font-semibold text-violet-200">City incident</div>
+                <div className="flex flex-wrap gap-2">
+                  {cityIncidents.map((incident) => (
+                    <button
+                      key={incident.name}
+                      type="button"
+                      onClick={() => setSelectedIncident(incident)}
+                      className={`rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] transition ${
+                        selectedIncident.name === incident.name
+                          ? 'border-violet-400 bg-violet-400/10 text-violet-100'
+                          : 'border-white/10 bg-slate-800 text-slate-200'
+                      }`}
+                    >
+                      {incident.name}
+                    </button>
+                  ))}
+                </div>
+                <p className={`mt-3 text-sm font-semibold ${selectedIncident.accent}`}>
+                  {selectedIncident.name}
+                </p>
+                <p className="mt-1 text-xs text-slate-300">{selectedIncident.mood}</p>
+              </div>
+
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="mb-3 text-sm font-medium text-slate-300">Tactical play</div>
                 <div className="space-y-2">
@@ -657,26 +728,30 @@ export default function HomePage() {
               <div className="rounded-2xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 p-4">
                 <div className="mb-3 text-sm font-semibold text-emerald-200">Rider profile</div>
                 <div className="space-y-2">
-                  {riderArchetypes.map((rider) => (
-                    <button
-                      key={rider.name}
-                      type="button"
-                      onClick={() => setSelectedRider(rider)}
-                      className={`w-full rounded-2xl border px-3 py-2 text-left transition ${
-                        selectedRider.name === rider.name
-                          ? 'border-emerald-400 bg-emerald-400/10 text-emerald-100'
-                          : 'border-white/10 bg-slate-800 text-slate-200 hover:border-white/20'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-semibold">{rider.name}</span>
-                        <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                          x{rider.bonus.toFixed(2)}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-slate-300">{rider.pressure}</p>
-                    </button>
-                  ))}
+                  {riderArchetypes.map((rider) => {
+                    const unlocked = unlockedRiders.has(rider.name);
+                    return (
+                      <button
+                        key={rider.name}
+                        type="button"
+                        disabled={!unlocked}
+                        onClick={() => setSelectedRider(rider)}
+                        className={`w-full rounded-2xl border px-3 py-2 text-left transition ${
+                          selectedRider.name === rider.name
+                            ? 'border-emerald-400 bg-emerald-400/10 text-emerald-100'
+                            : 'border-white/10 bg-slate-800 text-slate-200 hover:border-white/20'
+                        } ${!unlocked ? 'cursor-not-allowed opacity-45' : ''}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-semibold">{rider.name}</span>
+                          <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                            {unlocked ? `x${rider.bonus.toFixed(2)}` : 'Locked'}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-300">{rider.pressure}</p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1489,10 +1564,10 @@ export default function HomePage() {
                 Leaderboard
               </div>
               <div className="space-y-3">
-                {career.leaderboard.length === 0 ? (
-                  <p className="text-sm text-slate-600">No completed runs yet. Finish a circuit to set the city record.</p>
+                {seasonLeaderboard.length === 0 ? (
+                  <p className="text-sm text-slate-600">No completed runs yet for {selectedSeason.name}. Finish a circuit to set this season’s record.</p>
                 ) : (
-                  career.leaderboard.map((entry, index) => (
+                  seasonLeaderboard.map((entry, index) => (
                     <div key={entry.id} className="rounded-2xl border border-slate-200 bg-white/80 p-3">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">#{index + 1}</span>
@@ -1560,7 +1635,15 @@ export default function HomePage() {
         </section>
 
         <div className="mt-6">
-          <ShareCard route={selectedRoute} fare={fare} text={insultText} />
+          <ShareCard
+            route={selectedRoute}
+            fare={fare}
+            text={insultText}
+            season={selectedSeason.name}
+            streak={bestStreak}
+            badge={cityRank.title}
+            score={runSummary.finalScore}
+          />
         </div>
 
         {showPotholeMode && (
