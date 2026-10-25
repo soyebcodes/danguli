@@ -19,6 +19,7 @@ type GameStore = {
   selectedRoute: RouteOption;
   fare: number;
   triggerCount: number;
+  bestStreak: number;
   insultText: string;
   isEscaping: boolean;
   soundEnabled: boolean;
@@ -44,6 +45,7 @@ export const useGameStore = create<GameStore>()(
       selectedRoute: routeOptions[0],
       fare: 220,
       triggerCount: 0,
+      bestStreak: 0,
       insultText: 'পাহাড়তলী যাইতাম না, ভাই! গ্যারেজের ভেতর ঠেকাইয়া দিছি।',
       isEscaping: false,
       soundEnabled: true,
@@ -73,8 +75,11 @@ export const useGameStore = create<GameStore>()(
             nextBadges.push('Master haggler');
           }
 
+          const nextTriggerCount = state.triggerCount + 1;
+
           return {
-            triggerCount: state.triggerCount + 1,
+            triggerCount: nextTriggerCount,
+            bestStreak: Math.max(state.bestStreak, nextTriggerCount),
             insultText: excuse,
             isEscaping: true,
             recentLog: [
@@ -109,6 +114,7 @@ export const useGameStore = create<GameStore>()(
       resetStats: () =>
         set({
           triggerCount: 0,
+          bestStreak: 0,
           insultText: 'পাহাড়তলী যাইতাম না, ভাই! গ্যারেজের ভেতর ঠেকাইয়া দিছি।',
           isEscaping: false,
           soundEnabled: true,
@@ -127,6 +133,7 @@ export const useGameStore = create<GameStore>()(
         selectedRoute: state.selectedRoute,
         fare: state.fare,
         triggerCount: state.triggerCount,
+        bestStreak: state.bestStreak,
         insultText: state.insultText,
         soundEnabled: state.soundEnabled,
         volume: state.volume,

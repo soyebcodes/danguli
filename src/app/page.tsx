@@ -18,6 +18,7 @@ export default function HomePage() {
     selectedRoute,
     fare,
     triggerCount,
+    bestStreak,
     insultText,
     isEscaping,
     stats,
@@ -64,6 +65,11 @@ export default function HomePage() {
     Math.round((triggerCount / routeObjectiveTarget) * 100),
   );
   const routeObjectiveComplete = triggerCount >= routeObjectiveTarget;
+  const reputationScore = Math.min(
+    9999,
+    stats.refusals * 180 + stats.totalFare * 2 + bestStreak * 120,
+  );
+  const comboMultiplier = (1 + Math.min(bestStreak, 10) / 10).toFixed(1);
 
   useEffect(() => {
     if (routeObjectiveComplete) {
@@ -318,6 +324,53 @@ export default function HomePage() {
           <StatBadge label="Fake money" value={`৳${stats.totalFare}`} />
           <StatBadge label="Badges" value={stats.badges.length} />
         </div>
+
+        <section className="mt-6 grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
+          <div className="rounded-[28px] border border-amber-300 bg-gradient-to-br from-amber-100 via-white to-rose-100 p-5 shadow-panel">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-700">
+              Street reputation
+            </p>
+            <div className="mt-3 flex items-end justify-between gap-3">
+              <div>
+                <div className="text-4xl font-black text-slate-900">{reputationScore}</div>
+                <p className="mt-1 text-sm text-slate-600">Total reputation score</p>
+              </div>
+              <div className="rounded-full border border-amber-300 bg-white/70 px-3 py-1 text-sm font-bold text-amber-800">
+                x{comboMultiplier}
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/80 bg-white/60 p-3">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Best streak</p>
+                <p className="mt-2 text-xl font-black text-slate-900">{bestStreak}</p>
+              </div>
+              <div className="rounded-2xl border border-white/80 bg-white/60 p-3">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Route mastery</p>
+                <p className="mt-2 text-xl font-black text-slate-900">{stats.badges.length - 1}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-slate-200 bg-slate-900 p-5 text-white shadow-panel">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-300">
+              Session status
+            </p>
+            <div className="mt-4 space-y-3 text-sm text-slate-200">
+              <div className="flex items-center justify-between">
+                <span>current route</span>
+                <span className="font-bold text-amber-300">{selectedRoute}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>arrested value</span>
+                <span className="font-bold text-rose-300">৳{fare}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>traffic mood</span>
+                <span className="font-bold text-emerald-300">{routePressure}%</span>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <div className="mt-6 rounded-[28px] border border-amber-300 bg-white/60 p-4 backdrop-blur-md">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.22em] text-amber-700">
