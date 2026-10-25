@@ -1,0 +1,181 @@
+'use client';
+
+import { motion } from 'framer-motion';
+import { ArrowRight, MapPin, PiggyBank, Sparkles } from 'lucide-react';
+import { useMemo, useState } from 'react';
+
+import { PotholeMiniGame } from '@/components/rickshaw/PotholeMiniGame';
+import { RickshawScene } from '@/components/rickshaw/RickshawScene';
+import { refusalExcuses } from '@/data/excuses';
+import { routeOptions, type RouteOption } from '@/data/routes';
+import { playDustWhistle, playRickshawBell } from '@/lib/sound';
+
+export default function HomePage() {
+  const [selectedRoute, setSelectedRoute] = useState<RouteOption>(routeOptions[0]);
+  const [fare, setFare] = useState(220);
+  const [triggerCount, setTriggerCount] = useState(0);
+  const [insultText, setInsultText] = useState<string>(refusalExcuses[0]);
+  const [isEscaping, setIsEscaping] = useState(false);
+
+  const mood = useMemo(() => {
+    if (fare <= 40) {
+      return { emoji: '😠', label: 'Furious face', tone: 'text-rose-300' };
+    }
+    if (fare <= 150) {
+      return { emoji: '😒', label: 'Unimpressed', tone: 'text-amber-300' };
+    }
+    return { emoji: '🤑', label: 'Dollar-sign stare', tone: 'text-emerald-300' };
+  }, [fare]);
+
+  const showPotholeMode = fare > 250;
+
+  const handleReject = () => {
+    setTriggerCount((count) => count + 1);
+    const nextExcuse =
+      refusalExcuses[Math.floor(Math.random() * refusalExcuses.length)];
+    setInsultText(nextExcuse);
+    setIsEscaping(true);
+    playRickshawBell();
+    playDustWhistle();
+
+    window.setTimeout(() => setIsEscaping(false), 900);
+  };
+
+  return (
+    <main className="min-h-screen px-4 py-8 md:px-8">
+      <div className="mx-auto max-w-6xl">
+        <motion.header
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between"
+        >
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-rose-500">
+              Bangladesh ride refusal simulator
+            </p>
+            <h1 className="mt-2 text-4xl font-black text-slate-900 md:text-5xl">
+              Amader Rickshaw Mama
+            </h1>
+          </div>
+          <div className="rounded-full border border-amber-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
+            Refusal streak:{' '}
+            <span className="font-bold text-rose-500">{triggerCount}</span>
+          </div>
+        </motion.header>
+
+        <section className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
+          <RickshawScene
+            triggerCount={triggerCount}
+            insultText={insultText}
+            fare={fare}
+            isEscaping={isEscaping}
+          />
+
+          <aside className="rounded-[28px] bg-slate-900 p-5 text-white shadow-panel md:p-7">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Haggle & refuse</h2>
+              <div className="rounded-full border border-white/15 bg-white/5 px-2 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">
+                live
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-5">
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-300">
+                  Popular route
+                </span>
+                <select
+                  value={selectedRoute}
+                  onChange={(event) => setSelectedRoute(event.target.value as RouteOption)}
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none transition focus:border-amber-400"
+                >
+                  {routeOptions.map((route) => (
+                    <option key={route} value={route} className="text-slate-900">
+                      {route}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div>
+                <div className="mb-2 flex items-center justify-between text-sm font-medium text-slate-300">
+                  <span>Fare offer</span>
+                  <span className="text-xl font-bold text-amber-300">৳{fare}</span>
+                </div>
+                <input
+                  type="range"
+                  min={20}
+                  max={500}
+                  value={fare}
+                  onChange={(event) => setFare(Number(event.target.value))}
+                  className="h-2 w-full cursor-pointer accent-amber-400"
+                />
+              </div>
+
+              <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-amber-200">
+                  <PiggyBank className="h-4 w-4" />
+                  Fare reaction
+                </div>
+                <p className={`mt-2 text-xl font-bold ${mood.tone}`}>
+                  {mood.emoji} {mood.label}
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={handleReject}
+                  className="rounded-2xl bg-rose-500 px-4 py-3 font-bold text-white shadow-lg shadow-rose-500/20 transition hover:bg-rose-400"
+                >
+                  মামু যাইবেন?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFare((value) => Math.min(500, value + 25))}
+                  className="rounded-2xl bg-emerald-500 px-4 py-3 font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400"
+                >
+                  Increase offer
+                </button>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-slate-300">
+                  <MapPin className="h-4 w-4 text-emerald-300" />
+                  Selected route
+                </div>
+                <p className="mt-2 text-lg font-semibold text-white">{selectedRoute}</p>
+              </div>
+
+              {showPotholeMode && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-2xl border border-amber-400/30 bg-gradient-to-br from-amber-500/10 to-rose-500/10 p-3"
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-amber-200">
+                      <Sparkles className="h-4 w-4" />
+                      Road hazard mode
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-amber-300" />
+                  </div>
+                  <p className="text-sm text-slate-200">
+                    High fare triggers the pothole balance challenge.
+                  </p>
+                </motion.div>
+              )}
+            </div>
+          </aside>
+        </section>
+
+        {showPotholeMode && (
+          <div className="mt-6">
+            <PotholeMiniGame />
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
