@@ -96,6 +96,33 @@ const trafficShifts = [
   },
 ] as const;
 
+const ambiencePresets = [
+  {
+    name: 'Golden dusk',
+    background: 'radial-gradient(circle at top, rgba(251,191,36,0.28), transparent 25%), linear-gradient(135deg, #fff7ed 0%, #fef9c3 44%, #fde68a 100%)',
+    card: 'from-amber-100 via-white to-orange-100',
+    accent: '#f59e0b',
+    description: 'Warm, cinematic, and full of street-sunset energy.',
+    glow: 'rgba(251, 191, 36, 0.22)',
+  },
+  {
+    name: 'Neon night',
+    background: 'radial-gradient(circle at top, rgba(16,185,129,0.16), transparent 24%), linear-gradient(135deg, #020617 0%, #0f172a 42%, #111827 100%)',
+    card: 'from-slate-900 via-slate-800 to-emerald-950',
+    accent: '#34d399',
+    description: 'Deep night tones, neon light, and a late-city mood.',
+    glow: 'rgba(52, 211, 153, 0.22)',
+  },
+  {
+    name: 'Monsoon haze',
+    background: 'radial-gradient(circle at top, rgba(59,130,246,0.18), transparent 26%), linear-gradient(135deg, #eff6ff 0%, #dbeafe 38%, #bfdbfe 100%)',
+    card: 'from-sky-100 via-white to-indigo-100',
+    accent: '#3b82f6',
+    description: 'Mistier tones with a cool rainy street atmosphere.',
+    glow: 'rgba(59, 130, 246, 0.18)',
+  },
+] as const;
+
 const refusalStyles = [
   {
     name: 'Deadpan',
@@ -151,6 +178,7 @@ export default function HomePage() {
   const [selectedRider, setSelectedRider] = useState<(typeof riderArchetypes)[number]>(riderArchetypes[0]);
   const [selectedShift, setSelectedShift] = useState<(typeof trafficShifts)[number]>(trafficShifts[2]);
   const [selectedStyle, setSelectedStyle] = useState<(typeof refusalStyles)[number]>(refusalStyles[0]);
+  const [selectedAmbience, setSelectedAmbience] = useState<(typeof ambiencePresets)[number]>(ambiencePresets[0]);
   const [storyIndex, setStoryIndex] = useState(0);
 
   useEffect(() => {
@@ -203,6 +231,10 @@ export default function HomePage() {
       : momentum < 70
         ? 'from-emerald-400 to-amber-400'
         : 'from-rose-500 to-orange-500';
+  const ambienceStyle = {
+    background: selectedAmbience.background,
+    boxShadow: `0 22px 60px ${selectedAmbience.glow}`,
+  } as const;
   const activeStory = routeProfile.story[storyIndex % routeProfile.story.length];
 
   const challengeDeck = [
@@ -291,13 +323,17 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen px-4 py-8 md:px-8">
+    <main
+      className="min-h-screen px-4 py-8 md:px-8"
+      style={ambienceStyle}
+    >
       <div className="mx-auto max-w-6xl">
         <motion.header
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="mb-8 rounded-[30px] border-4 border-amber-300 bg-white/70 p-5 shadow-panel backdrop-blur-sm"
+          style={{ boxShadow: `0 22px 60px ${selectedAmbience.glow}` }}
         >
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
@@ -628,6 +664,43 @@ export default function HomePage() {
           <StatBadge label="Badges" value={stats.badges.length} accent="emerald" />
         </div>
 
+        <section className="mt-6 rounded-[28px] border border-white/60 bg-white/60 p-5 shadow-panel backdrop-blur-md">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-600">
+                City ambience
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">Street mood</h3>
+            </div>
+            <div className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-700">
+              {selectedAmbience.name}
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {ambiencePresets.map((preset) => (
+              <button
+                key={preset.name}
+                type="button"
+                onClick={() => setSelectedAmbience(preset)}
+                className={`rounded-[22px] border p-3 text-left transition ${
+                  selectedAmbience.name === preset.name
+                    ? 'border-slate-900 bg-slate-900 text-white shadow-lg'
+                    : 'border-white/70 bg-white/70 text-slate-700 hover:border-slate-300'
+                }`}
+                style={{ background: preset.background }}
+              >
+                <div className="mb-2 flex items-center justify-between gap-4">
+                  <span className="text-sm font-bold">{preset.name}</span>
+                  <span className="h-3 w-3 rounded-full" style={{ background: preset.accent }} />
+                </div>
+                <p className={`text-xs ${selectedAmbience.name === preset.name ? 'text-slate-200' : 'text-slate-600'}`}>
+                  {preset.description}
+                </p>
+              </button>
+            ))}
+          </div>
+        </section>
+
         <section className="mt-6 grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
           <div className="rounded-[28px] border border-amber-300 bg-gradient-to-br from-amber-100 via-white to-rose-100 p-5 shadow-panel">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-700">
@@ -786,25 +859,6 @@ export default function HomePage() {
                 : `Keep refusing riders on this route to complete the objective and unlock a special badge.`}
             </p>
           </div>
-        </section>
-
-        <section className="mt-6 rounded-[28px] border border-cyan-300 bg-gradient-to-br from-cyan-100 via-white to-emerald-100 p-5 shadow-panel">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-700">
-                Rider threat
-              </p>
-              <h3 className="mt-2 text-2xl font-black text-slate-900">{selectedRider.name}</h3>
-            </div>
-            <div className="rounded-full border border-cyan-300 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">
-              x{selectedRider.bonus.toFixed(2)}
-            </div>
-          </div>
-
-          <p className="mt-4 text-sm leading-6 text-slate-700">{selectedRider.threat}</p>
-          <p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-            {selectedRider.pressure}
-          </p>
         </section>
 
         <section className="mt-6 rounded-[28px] border border-cyan-300 bg-gradient-to-br from-cyan-100 via-white to-emerald-100 p-5 shadow-panel">

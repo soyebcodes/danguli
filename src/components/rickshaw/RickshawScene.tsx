@@ -40,8 +40,23 @@ export function RickshawScene({
         </span>
       </div>
 
-      <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-b from-amber-50 via-white to-red-50 p-5">
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-emerald-200/70 to-transparent" />
+      <div className="relative overflow-hidden rounded-[24px] border border-white/60 bg-gradient-to-b from-amber-50 via-white to-red-50 p-5">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.16),_transparent_20%),radial-gradient(circle_at_bottom,_rgba(16,185,129,0.12),_transparent_24%)]" />
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-emerald-200/80 to-transparent" />
+        <div className="absolute inset-x-8 bottom-4 h-12 rounded-t-[30px] bg-gradient-to-r from-amber-200/70 via-emerald-200/60 to-sky-200/70 blur-sm" />
+
+        {Array.from({ length: 9 }, (_, index) => (
+          <motion.div
+            key={`city-block-${index}`}
+            className="absolute bottom-3 w-8 rounded-t-xl bg-slate-800/25"
+            style={{
+              left: `${8 + index * 11}%`,
+              height: `${28 + (index % 4) * 18}px`,
+            }}
+            animate={{ opacity: [0.2, 0.45, 0.2] }}
+            transition={{ duration: 3 + index * 0.35, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        ))}
 
         <motion.div
           key={triggerCount}
