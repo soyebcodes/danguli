@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-import { type RouteOption, routeOptions, routeProfiles } from '@/data/routes';
+import { type RouteOption, routeOptions, routeProfiles } from "@/data/routes";
 
 const createRouteChallenge = (route: RouteOption) => ({
   id: `route-${route}`,
@@ -22,7 +22,7 @@ type PlayerStats = {
 const defaultStats: PlayerStats = {
   refusals: 0,
   totalFare: 0,
-  badges: ['First refusal'],
+  badges: ["First refusal"],
 };
 
 type RouteChallenge = {
@@ -55,6 +55,8 @@ type CareerState = {
   unlockedRoutes: RouteOption[];
   leaderboard: CareerEntry[];
   seasonArchive: SeasonArchiveEntry[];
+  bossWins: number;
+  unlockedBossRewards: string[];
 };
 
 type GameStore = {
@@ -86,6 +88,7 @@ type GameStore = {
     season: string;
     badge: string;
   }) => void;
+  recordBossVictory: (reward: string) => void;
   logEvent: (event: string) => void;
   resetStats: () => void;
 };
@@ -96,6 +99,8 @@ const defaultCareer: CareerState = {
   unlockedRoutes: [routeOptions[0]],
   leaderboard: [],
   seasonArchive: [],
+  bossWins: 0,
+  unlockedBossRewards: ["City rookie crest"],
 };
 
 export const useGameStore = create<GameStore>()(
@@ -105,11 +110,11 @@ export const useGameStore = create<GameStore>()(
       fare: 220,
       triggerCount: 0,
       bestStreak: 0,
-      insultText: 'পাহাড়তলী যাইতাম না, ভাই! গ্যারেজের ভেতর ঠেকাইয়া দিছি।',
+      insultText: "পাহাড়তলী যাইতাম না, ভাই! গ্যারেজের ভেতর ঠেকাইয়া দিছি।",
       isEscaping: false,
       soundEnabled: true,
       volume: 70,
-      recentLog: ['Session started — the lane is open for chaos.'],
+      recentLog: ["Session started — the lane is open for chaos."],
       currentChallenge: createRouteChallenge(routeOptions[0]),
       stats: defaultStats,
       career: defaultCareer,
@@ -136,11 +141,11 @@ export const useGameStore = create<GameStore>()(
           const nextTotalFare = state.stats.totalFare + fare;
           const nextBadges = [...state.stats.badges];
 
-          if (nextRefusals >= 3 && !nextBadges.includes('Traffic veteran')) {
-            nextBadges.push('Traffic veteran');
+          if (nextRefusals >= 3 && !nextBadges.includes("Traffic veteran")) {
+            nextBadges.push("Traffic veteran");
           }
-          if (nextTotalFare >= 1500 && !nextBadges.includes('Master haggler')) {
-            nextBadges.push('Master haggler');
+          if (nextTotalFare >= 1500 && !nextBadges.includes("Master haggler")) {
+            nextBadges.push("Master haggler");
           }
 
           const nextTriggerCount = state.triggerCount + 1;
@@ -154,7 +159,10 @@ export const useGameStore = create<GameStore>()(
           const nextChallengeCompleted =
             nextChallengeProgress >= state.currentChallenge.target;
 
-          if (nextChallengeCompleted && !nextBadges.includes(state.currentChallenge.reward)) {
+          if (
+            nextChallengeCompleted &&
+            !nextBadges.includes(state.currentChallenge.reward)
+          ) {
             nextBadges.push(state.currentChallenge.reward);
           }
 
@@ -212,17 +220,24 @@ export const useGameStore = create<GameStore>()(
             ? state.career.unlockedRoutes
             : [...state.career.unlockedRoutes, route];
 
-          const nextLeaderboard = [...state.career.leaderboard, {
-            id: `${route}-${Date.now()}`,
-            route,
-            score,
-            season,
-            date: new Date().toISOString(),
-            badge,
-          }].sort((a, b) => b.score - a.score).slice(0, 6);
+          const nextLeaderboard = [
+            ...state.career.leaderboard,
+            {
+              id: `${route}-${Date.now()}`,
+              route,
+              score,
+              season,
+              date: new Date().toISOString(),
+              badge,
+            },
+          ]
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 6);
 
           const nextSeasonArchive = [...state.career.seasonArchive];
-          const archiveEntry = nextSeasonArchive.find((entry) => entry.season === season);
+          const archiveEntry = nextSeasonArchive.find(
+            (entry) => entry.season === season,
+          );
 
           if (archiveEntry) {
             archiveEntry.bestScore = Math.max(archiveEntry.bestScore, score);
@@ -236,7 +251,33 @@ export const useGameStore = create<GameStore>()(
               bestScore: Math.max(state.career.bestScore, score),
               unlockedRoutes: nextUnlockedRoutes,
               leaderboard: nextLeaderboard,
-              seasonArchive: nextSeasonArchive.sort((a, b) => b.bestScore - a.bestScore),
+              seasonArchive: nextSeasonArchive.sort(
+                (a, b) => b.bestScore - a.bestScore,
+              ),
+              bossWins: state.career.bossWins,
+              unlockedBossRewards: state.career.unlockedBossRewards,
+            },
+          };
+        }),
+      recordBossVictory: (reward: string) =>
+        set((state) => {
+          if (state.career.unlockedBossRewards.includes(reward)) {
+            return {
+              career: {
+                ...state.career,
+                bossWins: state.career.bossWins + 1,
+              },
+            };
+          }
+
+          return {
+            career: {
+              ...state.career,
+              bossWins: state.career.bossWins + 1,
+              unlockedBossRewards: [
+                ...state.career.unlockedBossRewards,
+                reward,
+              ],
             },
           };
         }),
@@ -248,21 +289,23 @@ export const useGameStore = create<GameStore>()(
         set({
           triggerCount: 0,
           bestStreak: 0,
-          insultText: 'পাহাড়তলী যাইতাম না, ভাই! গ্যারেজের ভেতর ঠেকাইয়া দিছি।',
+          insultText: "পাহাড়তলী যাইতাম না, ভাই! গ্যারেজের ভেতর ঠেকাইয়া দিছি।",
           isEscaping: false,
           soundEnabled: true,
           volume: 70,
-          recentLog: ['Session reset — the lane is ready for another negotiation.'],
+          recentLog: [
+            "Session reset — the lane is ready for another negotiation.",
+          ],
           currentChallenge: createRouteChallenge(routeOptions[0]),
           stats: {
             refusals: 0,
             totalFare: 0,
-            badges: ['First refusal'],
+            badges: ["First refusal"],
           },
         }),
     }),
     {
-      name: 'rickshaw-mama-store',
+      name: "rickshaw-mama-store",
       partialize: (state) => ({
         selectedRoute: state.selectedRoute,
         fare: state.fare,

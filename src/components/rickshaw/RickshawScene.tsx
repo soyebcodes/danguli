@@ -9,6 +9,11 @@ type RickshawSceneProps = {
   insultText: string;
   fare: number;
   isEscaping: boolean;
+  weather: {
+    name: string;
+    icon: string;
+    accent: string;
+  };
 };
 
 export function RickshawScene({
@@ -16,6 +21,7 @@ export function RickshawScene({
   insultText,
   fare,
   isEscaping,
+  weather,
 }: RickshawSceneProps) {
   const dustParticles = useMemo(
     () =>
@@ -26,6 +32,60 @@ export function RickshawScene({
         delay: index * 0.04,
       })),
     [triggerCount],
+  );
+
+  const atmosphere = useMemo(() => {
+    switch (weather.name) {
+      case "Monsoon rain":
+        return {
+          sky: "linear-gradient(180deg, rgba(191,219,254,0.95) 0%, rgba(255,255,255,0.98) 35%, rgba(224,242,254,0.94) 100%)",
+          glow: "rgba(59,130,246,0.18)",
+          orb: "rgba(147,197,253,0.88)",
+          orbPosition: "right-12 top-10",
+        };
+      case "Dust storm":
+        return {
+          sky: "linear-gradient(180deg, rgba(251,191,36,0.68) 0%, rgba(254,243,199,0.95) 28%, rgba(251,146,60,0.8) 100%)",
+          glow: "rgba(234,179,8,0.12)",
+          orb: "rgba(120,113,108,0.9)",
+          orbPosition: "left-10 top-12",
+        };
+      case "Cool breeze":
+        return {
+          sky: "linear-gradient(180deg, rgba(187,247,208,0.9) 0%, rgba(255,255,255,0.99) 38%, rgba(219,234,254,0.88) 100%)",
+          glow: "rgba(16,185,129,0.12)",
+          orb: "rgba(255,255,255,0.82)",
+          orbPosition: "right-10 top-8",
+        };
+      default:
+        return {
+          sky: "linear-gradient(180deg, rgba(254,240,138,0.86) 0%, rgba(255,255,255,0.98) 32%, rgba(254,226,226,0.82) 100%)",
+          glow: "rgba(251,191,36,0.16)",
+          orb: "rgba(251,191,36,0.9)",
+          orbPosition: "right-12 top-10",
+        };
+    }
+  }, [weather.name]);
+
+  const rainDrops = useMemo(
+    () =>
+      Array.from({ length: 18 }, (_, index) => ({
+        id: `${weather.name}-drop-${index}`,
+        left: `${8 + ((index * 5) % 80)}%`,
+        delay: index * 0.18,
+        duration: 0.8 + (index % 5) * 0.18,
+      })),
+    [weather.name],
+  );
+
+  const dustBands = useMemo(
+    () =>
+      Array.from({ length: 8 }, (_, index) => ({
+        id: `${weather.name}-dust-${index}`,
+        left: `${4 + index * 11}%`,
+        delay: index * 0.22,
+      })),
+    [weather.name],
   );
 
   return (
@@ -40,10 +100,60 @@ export function RickshawScene({
         </span>
       </div>
 
-      <div className="relative overflow-hidden rounded-[24px] border border-white/60 bg-gradient-to-b from-amber-50 via-white to-red-50 p-5">
+      <div
+        className="relative overflow-hidden rounded-[24px] border border-white/60 p-5"
+        style={{
+          background: atmosphere.sky,
+          boxShadow: `inset 0 0 32px ${atmosphere.glow}`,
+        }}
+      >
+        <motion.div
+          className={`absolute h-16 w-16 rounded-full ${atmosphere.orbPosition}`}
+          style={{
+            background: `radial-gradient(circle, ${atmosphere.orb} 0%, rgba(255,255,255,0.45) 55%, transparent 72%)`,
+            boxShadow: `0 0 40px ${atmosphere.glow}`,
+          }}
+          animate={{
+            scale: [1, 1.08, 1],
+            opacity: [0.85, 1, 0.8],
+          }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.16),_transparent_20%),radial-gradient(circle_at_bottom,_rgba(16,185,129,0.12),_transparent_24%)]" />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-emerald-200/80 to-transparent" />
         <div className="absolute inset-x-8 bottom-4 h-12 rounded-t-[30px] bg-gradient-to-r from-amber-200/70 via-emerald-200/60 to-sky-200/70 blur-sm" />
+
+        {weather.name === "Monsoon rain" &&
+          rainDrops.map((drop) => (
+            <motion.span
+              key={drop.id}
+              className="absolute top-0 h-10 w-px bg-sky-400/80"
+              style={{ left: drop.left }}
+              animate={{ y: [0, 140], opacity: [0, 1, 0] }}
+              transition={{
+                duration: drop.duration,
+                delay: drop.delay,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            />
+          ))}
+
+        {weather.name === "Dust storm" &&
+          dustBands.map((band) => (
+            <motion.div
+              key={band.id}
+              className="absolute top-10 h-24 w-24 rounded-full bg-amber-200/10 blur-2xl"
+              style={{ left: band.left }}
+              animate={{ x: [0, 32, 0], opacity: [0.15, 0.45, 0.15] }}
+              transition={{
+                duration: 3.2,
+                delay: band.delay,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
 
         {Array.from({ length: 9 }, (_, index) => (
           <motion.div
@@ -54,7 +164,11 @@ export function RickshawScene({
               height: `${28 + (index % 4) * 18}px`,
             }}
             animate={{ opacity: [0.2, 0.45, 0.2] }}
-            transition={{ duration: 3 + index * 0.35, repeat: Infinity, ease: 'easeInOut' }}
+            transition={{
+              duration: 3 + index * 0.35,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
           />
         ))}
 

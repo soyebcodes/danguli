@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 
 export type PlayerStats = {
   refusals: number;
@@ -8,11 +8,11 @@ export type PlayerStats = {
   badges: string[];
 };
 
-const STORAGE_KEY = 'rickshaw-mama-stats';
+const STORAGE_KEY = "rickshaw-mama-stats";
 const defaultStats: PlayerStats = {
   refusals: 0,
   totalFare: 0,
-  badges: ['First refusal'],
+  badges: ["First refusal"],
 };
 
 export function usePersistentStats() {
@@ -29,7 +29,9 @@ export function usePersistentStats() {
       setStats({
         refusals: Number(parsed.refusals ?? 0),
         totalFare: Number(parsed.totalFare ?? 0),
-        badges: Array.isArray(parsed.badges) ? parsed.badges : defaultStats.badges,
+        badges: Array.isArray(parsed.badges)
+          ? parsed.badges
+          : defaultStats.badges,
       });
     } catch {
       setStats(defaultStats);
@@ -46,11 +48,11 @@ export function usePersistentStats() {
       const nextTotalFare = current.totalFare + fare;
       const badges = [...current.badges];
 
-      if (nextRefusals >= 3 && !badges.includes('Traffic veteran')) {
-        badges.push('Traffic veteran');
+      if (nextRefusals >= 3 && !badges.includes("Traffic veteran")) {
+        badges.push("Traffic veteran");
       }
-      if (nextTotalFare >= 1500 && !badges.includes('Master haggler')) {
-        badges.push('Master haggler');
+      if (nextTotalFare >= 1500 && !badges.includes("Master haggler")) {
+        badges.push("Master haggler");
       }
 
       return {

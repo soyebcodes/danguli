@@ -22,13 +22,15 @@ type PotholeMiniGameProps = {
 
 export function PotholeMiniGame({ onChallengeClear }: PotholeMiniGameProps) {
   const [balance, setBalance] = useState(0);
-  const [status, setStatus] = useState<"safe" | "wobbling" | "crashed">(
-    "safe",
-  );
+  const [status, setStatus] = useState<"safe" | "wobbling" | "crashed">("safe");
   const [challengeCleared, setChallengeCleared] = useState(false);
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<Engine | null>(null);
-  const bodyRefs = useRef<{ platform?: MatterBody; frontWheel?: MatterBody; rearWheel?: MatterBody }>({});
+  const bodyRefs = useRef<{
+    platform?: MatterBody;
+    frontWheel?: MatterBody;
+    rearWheel?: MatterBody;
+  }>({});
 
   useEffect(() => {
     if (!canvasRef.current) {
@@ -153,16 +155,22 @@ export function PotholeMiniGame({ onChallengeClear }: PotholeMiniGameProps) {
 
     const torque = direction === "left" ? -0.12 : 0.12;
     Body.setAngularVelocity(platform, platform.angularVelocity + torque);
-    Body.setAngularVelocity(bodyRefs.current.frontWheel ?? platform, 0.05 * (direction === "left" ? -1 : 1));
-    Body.setAngularVelocity(bodyRefs.current.rearWheel ?? platform, -0.05 * (direction === "left" ? -1 : 1));
+    Body.setAngularVelocity(
+      bodyRefs.current.frontWheel ?? platform,
+      0.05 * (direction === "left" ? -1 : 1),
+    );
+    Body.setAngularVelocity(
+      bodyRefs.current.rearWheel ?? platform,
+      -0.05 * (direction === "left" ? -1 : 1),
+    );
   };
 
   useEffect(() => {
-    if (challengeCleared || status === 'crashed') {
+    if (challengeCleared || status === "crashed") {
       return;
     }
 
-    if (status === 'safe' && Math.abs(balance) < 18) {
+    if (status === "safe" && Math.abs(balance) < 18) {
       const timeout = window.setTimeout(() => {
         setChallengeCleared(true);
         onChallengeClear?.();

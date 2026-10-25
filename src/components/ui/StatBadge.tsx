@@ -1,14 +1,14 @@
 type StatBadgeProps = {
   label: string;
   value: string | number;
-  accent?: 'amber' | 'rose' | 'emerald';
+  accent?: "amber" | "rose" | "emerald";
 };
 
-export function StatBadge({ label, value, accent = 'amber' }: StatBadgeProps) {
+export function StatBadge({ label, value, accent = "amber" }: StatBadgeProps) {
   const accentStyles = {
-    amber: 'border-amber-300/30 bg-amber-500/10 text-amber-200',
-    rose: 'border-rose-300/30 bg-rose-500/10 text-rose-200',
-    emerald: 'border-emerald-300/30 bg-emerald-500/10 text-emerald-200',
+    amber: "border-amber-300/30 bg-amber-500/10 text-amber-200",
+    rose: "border-rose-300/30 bg-rose-500/10 text-rose-200",
+    emerald: "border-emerald-300/30 bg-emerald-500/10 text-emerald-200",
   };
 
   return (

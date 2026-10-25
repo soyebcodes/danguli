@@ -1,22 +1,24 @@
-'use client';
+"use client";
 
-import { useCallback } from 'react';
+import { useCallback } from "react";
 
-import { useGameStore } from '@/store/gameStore';
+import { useGameStore } from "@/store/gameStore";
 
 let audioContext: AudioContext | null = null;
 
 const getAudioContext = () => {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return null;
   }
 
   if (!audioContext) {
     const AudioCtor =
       window.AudioContext ||
-      (window as typeof window & {
-        webkitAudioContext?: typeof AudioContext;
-      }).webkitAudioContext;
+      (
+        window as typeof window & {
+          webkitAudioContext?: typeof AudioContext;
+        }
+      ).webkitAudioContext;
 
     if (!AudioCtor) {
       return null;
@@ -25,7 +27,7 @@ const getAudioContext = () => {
     audioContext = new AudioCtor();
   }
 
-  if (audioContext.state === 'suspended') {
+  if (audioContext.state === "suspended") {
     void audioContext.resume();
   }
 
@@ -51,7 +53,7 @@ export function useSoundFX() {
       const gainNode = ctx.createGain();
       const level = (volume / 100) * 0.08;
 
-      oscillator.type = 'triangle';
+      oscillator.type = "triangle";
       oscillator.frequency.value = 780;
       gainNode.gain.value = level;
 
@@ -80,9 +82,12 @@ export function useSoundFX() {
       const gainNode = ctx.createGain();
       const level = (volume / 100) * 0.05;
 
-      oscillator.type = 'sawtooth';
+      oscillator.type = "sawtooth";
       oscillator.frequency.setValueAtTime(120, ctx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.18);
+      oscillator.frequency.exponentialRampToValueAtTime(
+        40,
+        ctx.currentTime + 0.18,
+      );
       gainNode.gain.setValueAtTime(level, ctx.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
 
