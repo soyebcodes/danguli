@@ -21,14 +21,20 @@ type GameStore = {
   triggerCount: number;
   insultText: string;
   isEscaping: boolean;
+  soundEnabled: boolean;
+  volume: number;
+  recentLog: string[];
   stats: PlayerStats;
   setSelectedRoute: (route: RouteOption) => void;
   setFare: (fare: number) => void;
   increaseFare: (by?: number) => void;
   setInsultText: (text: string) => void;
   setIsEscaping: (value: boolean) => void;
+  setSoundEnabled: (value: boolean) => void;
+  setVolume: (value: number) => void;
   registerRefusal: (fare: number, excuse: string) => void;
   unlockBadge: (badge: string) => void;
+  logEvent: (event: string) => void;
   resetStats: () => void;
 };
 
@@ -40,6 +46,9 @@ export const useGameStore = create<GameStore>()(
       triggerCount: 0,
       insultText: 'পাহাড়তলী যাইতাম না, ভাই! গ্যারেজের ভেতর ঠেকাইয়া দিছি।',
       isEscaping: false,
+      soundEnabled: true,
+      volume: 70,
+      recentLog: ['Session started — the lane is open for chaos.'],
       stats: defaultStats,
       setSelectedRoute: (route) => set({ selectedRoute: route }),
       setFare: (fare) => set({ fare: Math.max(20, Math.min(500, fare)) }),
@@ -49,6 +58,8 @@ export const useGameStore = create<GameStore>()(
         })),
       setInsultText: (text) => set({ insultText: text }),
       setIsEscaping: (value) => set({ isEscaping: value }),
+      setSoundEnabled: (value) => set({ soundEnabled: value }),
+      setVolume: (value) => set({ volume: Math.max(0, Math.min(100, value)) }),
       registerRefusal: (fare: number, excuse: string) =>
         set((state) => {
           const nextRefusals = state.stats.refusals + 1;
@@ -66,6 +77,10 @@ export const useGameStore = create<GameStore>()(
             triggerCount: state.triggerCount + 1,
             insultText: excuse,
             isEscaping: true,
+            recentLog: [
+              `Refused ${fare}৳ on ${state.selectedRoute} — the street won this round.`,
+              ...state.recentLog,
+            ].slice(0, 4),
             stats: {
               refusals: nextRefusals,
               totalFare: nextTotalFare,
@@ -80,17 +95,25 @@ export const useGameStore = create<GameStore>()(
           }
 
           return {
+            recentLog: [`Unlocked: ${badge}.`, ...state.recentLog].slice(0, 4),
             stats: {
               ...state.stats,
               badges: [...state.stats.badges, badge],
             },
           };
         }),
+      logEvent: (event: string) =>
+        set((state) => ({
+          recentLog: [event, ...state.recentLog].slice(0, 4),
+        })),
       resetStats: () =>
         set({
           triggerCount: 0,
           insultText: 'পাহাড়তলী যাইতাম না, ভাই! গ্যারেজের ভেতর ঠেকাইয়া দিছি।',
           isEscaping: false,
+          soundEnabled: true,
+          volume: 70,
+          recentLog: ['Session reset — the lane is ready for another negotiation.'],
           stats: {
             refusals: 0,
             totalFare: 0,
@@ -105,6 +128,9 @@ export const useGameStore = create<GameStore>()(
         fare: state.fare,
         triggerCount: state.triggerCount,
         insultText: state.insultText,
+        soundEnabled: state.soundEnabled,
+        volume: state.volume,
+        recentLog: state.recentLog,
         stats: state.stats,
       }),
     },

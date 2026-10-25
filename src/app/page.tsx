@@ -21,13 +21,19 @@ export default function HomePage() {
     insultText,
     isEscaping,
     stats,
+    soundEnabled,
+    volume,
+    recentLog,
     setSelectedRoute,
     setFare,
     increaseFare,
     setInsultText,
     setIsEscaping,
+    setSoundEnabled,
+    setVolume,
     registerRefusal,
     unlockBadge,
+    logEvent,
     resetStats,
   } = useGameStore();
   const { playBell, playWhistle } = useSoundFX();
@@ -87,6 +93,7 @@ export default function HomePage() {
     const nextExcuse = getRandomExcuseForRoute(selectedRoute);
     setInsultText(nextExcuse);
     registerRefusal(fare, nextExcuse);
+    logEvent(`Street drama on ${selectedRoute}: refusal delivered.`);
     playBell();
     playWhistle();
 
@@ -211,6 +218,33 @@ export default function HomePage() {
                 <p className="mt-3 text-sm text-slate-200">{routeProfile.heat}</p>
               </div>
 
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-medium text-slate-300">Street audio</div>
+                  <button
+                    type="button"
+                    onClick={() => setSoundEnabled(!soundEnabled)}
+                    className="rounded-full border border-white/10 bg-slate-800 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-100"
+                  >
+                    {soundEnabled ? 'On' : 'Off'}
+                  </button>
+                </div>
+
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={volume}
+                  onChange={(event) => setVolume(Number(event.target.value))}
+                  className="mt-3 h-2 w-full cursor-pointer accent-amber-400"
+                />
+                <div className="mt-1 flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                  <span>Quiet</span>
+                  <span>{volume}%</span>
+                  <span>Loud</span>
+                </div>
+              </div>
+
               <div className="grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
@@ -333,6 +367,20 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-amber-300 bg-white/60 p-4 backdrop-blur-md">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.22em] text-amber-700">
+            <Sparkles className="h-4 w-4" />
+            Street diary
+          </div>
+          <ul className="space-y-2 text-sm text-slate-700">
+            {recentLog.map((entry) => (
+              <li key={entry} className="rounded-xl border border-slate-200 bg-white/70 px-3 py-2">
+                {entry}
+              </li>
+            ))}
+          </ul>
         </section>
 
         <div className="mt-6">
