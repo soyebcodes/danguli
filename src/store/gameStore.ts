@@ -28,6 +28,7 @@ type GameStore = {
   setInsultText: (text: string) => void;
   setIsEscaping: (value: boolean) => void;
   registerRefusal: (fare: number, excuse: string) => void;
+  unlockBadge: (badge: string) => void;
   resetStats: () => void;
 };
 
@@ -69,6 +70,19 @@ export const useGameStore = create<GameStore>()(
               refusals: nextRefusals,
               totalFare: nextTotalFare,
               badges: nextBadges,
+            },
+          };
+        }),
+      unlockBadge: (badge: string) =>
+        set((state) => {
+          if (state.stats.badges.includes(badge)) {
+            return state;
+          }
+
+          return {
+            stats: {
+              ...state.stats,
+              badges: [...state.stats.badges, badge],
             },
           };
         }),

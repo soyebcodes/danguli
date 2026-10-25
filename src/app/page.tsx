@@ -27,6 +27,7 @@ export default function HomePage() {
     setInsultText,
     setIsEscaping,
     registerRefusal,
+    unlockBadge,
     resetStats,
   } = useGameStore();
   const { playBell, playWhistle } = useSoundFX();
@@ -340,7 +341,7 @@ export default function HomePage() {
 
         {showPotholeMode && (
           <div className="mt-6">
-            <PotholeMiniGame />
+            <PotholeMiniGame onChallengeClear={() => unlockBadge('Pothole champion')} />
           </div>
         )}
       </div>

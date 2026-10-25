@@ -16,11 +16,16 @@ import {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
-export function PotholeMiniGame() {
+type PotholeMiniGameProps = {
+  onChallengeClear?: () => void;
+};
+
+export function PotholeMiniGame({ onChallengeClear }: PotholeMiniGameProps) {
   const [balance, setBalance] = useState(0);
   const [status, setStatus] = useState<"safe" | "wobbling" | "crashed">(
     "safe",
   );
+  const [challengeCleared, setChallengeCleared] = useState(false);
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<Engine | null>(null);
   const bodyRefs = useRef<{ platform?: MatterBody; frontWheel?: MatterBody; rearWheel?: MatterBody }>({});
@@ -152,6 +157,21 @@ export function PotholeMiniGame() {
     Body.setAngularVelocity(bodyRefs.current.rearWheel ?? platform, -0.05 * (direction === "left" ? -1 : 1));
   };
 
+  useEffect(() => {
+    if (challengeCleared || status === 'crashed') {
+      return;
+    }
+
+    if (status === 'safe' && Math.abs(balance) < 18) {
+      const timeout = window.setTimeout(() => {
+        setChallengeCleared(true);
+        onChallengeClear?.();
+      }, 600);
+
+      return () => window.clearTimeout(timeout);
+    }
+  }, [balance, challengeCleared, onChallengeClear, status]);
+
   const statusClasses = {
     safe: "border-emerald-400/40 bg-emerald-500/10 text-emerald-300",
     wobbling: "border-amber-400/40 bg-amber-500/10 text-amber-300",
@@ -178,6 +198,12 @@ export function PotholeMiniGame() {
         ref={canvasRef}
         className="h-[280px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950/50"
       />
+
+      {challengeCleared && (
+        <div className="mt-4 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-300">
+          Road boss cleared — badge unlocked.
+        </div>
+      )}
 
       <div className="mt-4 space-y-3">
         <div className="h-3 w-full overflow-hidden rounded-full bg-slate-700">
