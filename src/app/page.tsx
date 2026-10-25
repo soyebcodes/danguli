@@ -240,6 +240,36 @@ export default function HomePage() {
     100,
     Math.round((stats.refusals * 10 + bestStreak * 12 + routePressure * 0.55) / 1.4),
   );
+  const routeProgress = routeOptions.map((route) => {
+    const profile = routeProfiles[route];
+    const baseProgress = Math.min(
+      100,
+      Math.round(
+        ((route === selectedRoute ? 20 : 0) +
+          (stats.refusals > 0 ? Math.min(60, stats.refusals * 5) : 0) +
+          profile.demand +
+          Math.min(25, Math.round(stats.totalFare / 60))) /
+          1.6,
+      ),
+    );
+
+    return {
+      route,
+      progress: baseProgress,
+      unlocked: route === selectedRoute || stats.refusals > 0 || routeObjectiveComplete,
+      focus: route === selectedRoute ? 'Hot lane' : 'City lane',
+    };
+  });
+  const starringRoute = routeProgress.reduce((best, route) =>
+    route.progress > best.progress ? route : best,
+  );
+  const runSummary = {
+    finalScore: Math.min(9999, reputationScore),
+    strongestStyle: selectedStyle.name,
+    strongestShift: selectedShift.name,
+    bestRoute: starringRoute.route,
+    topMode: routeObjectiveComplete ? 'route mastered' : 'lane pressure rising',
+  };
   const comboMultiplier = (1 + Math.min(bestStreak, 10) / 10).toFixed(1);
   const momentum = Math.min(
     100,
@@ -1101,6 +1131,66 @@ export default function HomePage() {
               <p className="mt-2 text-lg font-black text-slate-900">
                 {nextMilestone ? nextMilestone.title : 'City icon'}
               </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-emerald-300 bg-gradient-to-br from-emerald-100 via-white to-cyan-100 p-5 shadow-panel">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">
+                End-of-run summary
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">Route verdict</h3>
+            </div>
+            <div className="rounded-full border border-emerald-300 bg-white/70 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">
+              {runSummary.topMode}
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-2xl border border-white/70 bg-white/60 p-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Final score</p>
+              <p className="mt-2 text-xl font-black text-slate-900">{runSummary.finalScore}</p>
+            </div>
+            <div className="rounded-2xl border border-white/70 bg-white/60 p-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Best route</p>
+              <p className="mt-2 text-xl font-black text-slate-900">{runSummary.bestRoute}</p>
+            </div>
+            <div className="rounded-2xl border border-white/70 bg-white/60 p-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Favorite style</p>
+              <p className="mt-2 text-xl font-black text-slate-900">{runSummary.strongestStyle}</p>
+            </div>
+            <div className="rounded-2xl border border-white/70 bg-white/60 p-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Traffic mode</p>
+              <p className="mt-2 text-xl font-black text-slate-900">{runSummary.strongestShift}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/80 bg-white/80 p-4">
+            <div className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Route progression
+            </div>
+            <div className="space-y-3">
+              {routeProgress.map((routeSummary) => (
+                <div key={routeSummary.route} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-700">
+                    <span className="font-semibold text-slate-900">{routeSummary.route}</span>
+                    <span className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                      {routeSummary.focus}
+                    </span>
+                  </div>
+                  <div className="h-2.5 overflow-hidden rounded-full bg-slate-200">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-sky-500 transition-all duration-300"
+                      style={{ width: `${routeSummary.progress}%` }}
+                    />
+                  </div>
+                  <div className="mt-2 text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                    {routeSummary.progress}% route pressure
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
