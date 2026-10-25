@@ -96,6 +96,33 @@ const trafficShifts = [
   },
 ] as const;
 
+const citySeasons = [
+  {
+    name: 'Dawn patrol',
+    multiplier: 1,
+    description: 'The road is still waking up and the first arguments are mostly routine.',
+    hue: 'from-amber-200 via-orange-100 to-rose-100',
+  },
+  {
+    name: 'Rush-hour siege',
+    multiplier: 1.15,
+    description: 'The lane is crowded, hot, and every rider wants a faster answer.',
+    hue: 'from-rose-200 via-orange-100 to-amber-100',
+  },
+  {
+    name: 'Monsoon grid',
+    multiplier: 1.22,
+    description: 'Rain makes people louder, slower, and more dramatic than the weather itself.',
+    hue: 'from-sky-200 via-cyan-100 to-indigo-100',
+  },
+  {
+    name: 'Night kingpin',
+    multiplier: 1.3,
+    description: 'The city settles in and the loudest ego wins the first argument.',
+    hue: 'from-violet-200 via-indigo-100 to-slate-100',
+  },
+] as const;
+
 const ambiencePresets = [
   {
     name: 'Golden dusk',
@@ -178,6 +205,7 @@ export default function HomePage() {
   const [selectedRider, setSelectedRider] = useState<(typeof riderArchetypes)[number]>(riderArchetypes[0]);
   const [selectedShift, setSelectedShift] = useState<(typeof trafficShifts)[number]>(trafficShifts[2]);
   const [selectedStyle, setSelectedStyle] = useState<(typeof refusalStyles)[number]>(refusalStyles[0]);
+  const [selectedSeason, setSelectedSeason] = useState<(typeof citySeasons)[number]>(citySeasons[1]);
   const [selectedAmbience, setSelectedAmbience] = useState<(typeof ambiencePresets)[number]>(ambiencePresets[0]);
   const [storyIndex, setStoryIndex] = useState(0);
 
@@ -260,6 +288,21 @@ export default function HomePage() {
       focus: route === selectedRoute ? 'Hot lane' : 'City lane',
     };
   });
+  const routeBosses = routeOptions.map((route) => ({
+    route,
+    boss: `${route.split('→')[0].trim()} boss`,
+    progress: Math.min(
+      100,
+      Math.round(
+        ((route === selectedRoute ? 22 : 0) +
+          (stats.refusals > 0 ? Math.min(60, stats.refusals * 4) : 0) +
+          routeProfiles[route].demand * 0.4 +
+          bestStreak * 4) /
+          1.55,
+      ),
+    ),
+    title: route === selectedRoute ? 'Active boss lane' : 'City route',
+  }));
   const starringRoute = routeProgress.reduce((best, route) =>
     route.progress > best.progress ? route : best,
   );
@@ -357,7 +400,8 @@ export default function HomePage() {
             selectedTactic.bonus *
             selectedRider.bonus *
             selectedShift.bonus *
-            selectedStyle.bonus,
+            selectedStyle.bonus *
+            selectedSeason.multiplier,
         ),
       ),
     );
@@ -1057,6 +1101,50 @@ export default function HomePage() {
         </section>
 
         <section className="mt-6 rounded-[28px] border border-violet-300 bg-gradient-to-br from-violet-50 via-white to-amber-50 p-5 shadow-panel">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
+                Boss ladder
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">Route warlords</h3>
+            </div>
+            <div className="rounded-full border border-violet-300 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-violet-700">
+              {routeBosses.filter((boss) => boss.progress >= 75).length}/6 live
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {routeBosses.map((boss) => (
+              <div
+                key={boss.route}
+                className={`rounded-[22px] border p-4 ${
+                  boss.route === selectedRoute
+                    ? 'border-violet-400 bg-violet-500/10'
+                    : 'border-white/75 bg-white/70'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">{boss.route}</p>
+                  <span className="text-[10px] uppercase tracking-[0.18em] text-violet-600">
+                    {boss.title}
+                  </span>
+                </div>
+                <p className="mt-3 text-lg font-black text-slate-900">{boss.boss}</p>
+                <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-200">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500 transition-all duration-300"
+                    style={{ width: `${boss.progress}%` }}
+                  />
+                </div>
+                <div className="mt-2 text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                  {boss.progress}% pressure
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-violet-300 bg-gradient-to-br from-violet-50 via-white to-amber-50 p-5 shadow-panel">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
@@ -1192,6 +1280,46 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-violet-300 bg-gradient-to-br from-violet-100 via-white to-amber-100 p-5 shadow-panel">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
+                City season
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">{selectedSeason.name}</h3>
+            </div>
+            <div className="rounded-full border border-violet-300 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-violet-700">
+              x{selectedSeason.multiplier.toFixed(2)}
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {citySeasons.map((season) => (
+              <button
+                key={season.name}
+                type="button"
+                onClick={() => setSelectedSeason(season)}
+                className={`rounded-[22px] border p-3 text-left transition ${
+                  selectedSeason.name === season.name
+                    ? 'border-violet-500 bg-slate-900 text-white'
+                    : 'border-white/70 bg-white/70 text-slate-700 hover:border-violet-300'
+                }`}
+              >
+                <div className={`mb-2 h-2 rounded-full bg-gradient-to-r ${season.hue}`} />
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-bold">{season.name}</span>
+                  <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                    x{season.multiplier.toFixed(2)}
+                  </span>
+                </div>
+                <p className={`mt-2 text-xs ${selectedSeason.name === season.name ? 'text-slate-200' : 'text-slate-600'}`}>
+                  {season.description}
+                </p>
+              </button>
+            ))}
           </div>
         </section>
 
