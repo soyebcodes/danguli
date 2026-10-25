@@ -96,6 +96,29 @@ const trafficShifts = [
   },
 ] as const;
 
+const refusalStyles = [
+  {
+    name: 'Deadpan',
+    bonus: 1.1,
+    flair: 'Silent, calm, and impossible to rattle.',
+  },
+  {
+    name: 'Theatrical',
+    bonus: 1.25,
+    flair: 'Big gesture, sharper language, louder crowd effect.',
+  },
+  {
+    name: 'Knife-edge',
+    bonus: 1.4,
+    flair: 'Quick, cold, and merciless under pressure.',
+  },
+  {
+    name: 'Friendly but firm',
+    bonus: 1.05,
+    flair: 'Smooth tone that holds the line without exploding the scene.',
+  },
+] as const;
+
 export default function HomePage() {
   const {
     selectedRoute,
@@ -127,6 +150,7 @@ export default function HomePage() {
   const [selectedTactic, setSelectedTactic] = useState<(typeof tactics)[number]>(tactics[0]);
   const [selectedRider, setSelectedRider] = useState<(typeof riderArchetypes)[number]>(riderArchetypes[0]);
   const [selectedShift, setSelectedShift] = useState<(typeof trafficShifts)[number]>(trafficShifts[2]);
+  const [selectedStyle, setSelectedStyle] = useState<(typeof refusalStyles)[number]>(refusalStyles[0]);
   const [storyIndex, setStoryIndex] = useState(0);
 
   useEffect(() => {
@@ -233,7 +257,11 @@ export default function HomePage() {
       Math.max(
         20,
         Math.round(
-          (fare + routeEvent.modifier) * selectedTactic.bonus * selectedRider.bonus * selectedShift.bonus,
+          (fare + routeEvent.modifier) *
+            selectedTactic.bonus *
+            selectedRider.bonus *
+            selectedShift.bonus *
+            selectedStyle.bonus,
         ),
       ),
     );
@@ -241,7 +269,7 @@ export default function HomePage() {
     setInsultText(nextExcuse);
     registerRefusal(effectiveFare, nextExcuse);
     logEvent(
-      `${selectedTactic.label} on ${selectedRoute} • ${selectedShift.name}: ${routeEvent.name} is active.`,
+      `${selectedStyle.name} style on ${selectedRoute} • ${selectedShift.name}: ${routeEvent.name} is active.`,
     );
     setStoryIndex((current) => (current + 1) % routeProfile.story.length);
     playBell();
@@ -473,6 +501,32 @@ export default function HomePage() {
                 </div>
               </div>
 
+              <div className="rounded-2xl border border-rose-400/30 bg-gradient-to-br from-rose-500/10 to-orange-500/10 p-4">
+                <div className="mb-3 text-sm font-semibold text-rose-200">Refusal style</div>
+                <div className="space-y-2">
+                  {refusalStyles.map((style) => (
+                    <button
+                      key={style.name}
+                      type="button"
+                      onClick={() => setSelectedStyle(style)}
+                      className={`w-full rounded-2xl border px-3 py-2 text-left transition ${
+                        selectedStyle.name === style.name
+                          ? 'border-rose-400 bg-rose-400/10 text-rose-100'
+                          : 'border-white/10 bg-slate-800 text-slate-200 hover:border-white/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold">{style.name}</span>
+                        <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                          x{style.bonus.toFixed(2)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-300">{style.flair}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-medium text-slate-300">Street audio</div>
@@ -608,6 +662,10 @@ export default function HomePage() {
               <div className="flex items-center justify-between">
                 <span>shift</span>
                 <span className="font-bold text-cyan-300">{selectedShift.name}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>style</span>
+                <span className="font-bold text-rose-300">{selectedStyle.name}</span>
               </div>
             </div>
           </div>
@@ -750,6 +808,22 @@ export default function HomePage() {
           <p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
             {selectedRider.pressure}
           </p>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-rose-300 bg-gradient-to-br from-rose-100 via-white to-orange-100 p-5 shadow-panel">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-rose-700">
+                Signature style
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">{selectedStyle.name}</h3>
+            </div>
+            <div className="rounded-full border border-rose-300 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-rose-700">
+              x{selectedStyle.bonus.toFixed(2)}
+            </div>
+          </div>
+
+          <p className="mt-4 text-sm leading-6 text-slate-700">{selectedStyle.flair}</p>
         </section>
 
         <section className="mt-6 rounded-[28px] border border-amber-300 bg-white/60 p-4 backdrop-blur-md">
