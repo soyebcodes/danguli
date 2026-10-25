@@ -8,8 +8,8 @@ import { PotholeMiniGame } from "@/components/rickshaw/PotholeMiniGame";
 import { RickshawScene } from "@/components/rickshaw/RickshawScene";
 import { ShareCard } from "@/components/ui/ShareCard";
 import { StatBadge } from "@/components/ui/StatBadge";
-import { refusalExcuses } from "@/data/excuses";
-import { routeOptions } from "@/data/routes";
+import { getRandomExcuseForRoute } from "@/data/excuses";
+import { routeOptions, routeProfiles } from "@/data/routes";
 import { useSoundFX } from "@/hooks/useSoundFX";
 import { useGameStore } from "@/store/gameStore";
 
@@ -30,6 +30,7 @@ export default function HomePage() {
     resetStats,
   } = useGameStore();
   const { playBell, playWhistle } = useSoundFX();
+  const routeProfile = routeProfiles[selectedRoute];
 
   const mood = useMemo(() => {
     if (fare <= 40) {
@@ -46,10 +47,10 @@ export default function HomePage() {
   }, [fare]);
 
   const showPotholeMode = fare > 250;
+  const routePressure = Math.min(100, Math.round((routeProfile.demand + fare / 5) / 1.65));
 
   const handleReject = () => {
-    const nextExcuse =
-      refusalExcuses[Math.floor(Math.random() * refusalExcuses.length)];
+    const nextExcuse = getRandomExcuseForRoute(selectedRoute);
     setInsultText(nextExcuse);
     registerRefusal(fare, nextExcuse);
     playBell();
@@ -116,9 +117,11 @@ export default function HomePage() {
                 </span>
                 <select
                   value={selectedRoute}
-                  onChange={(event) =>
-                    setSelectedRoute(event.target.value as (typeof routeOptions)[number])
-                  }
+                  onChange={(event) => {
+                    const route = event.target.value as (typeof routeOptions)[number];
+                    setSelectedRoute(route);
+                    setFare(routeProfiles[route].baseFare);
+                  }}
                   className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none transition focus:border-amber-400"
                 >
                   {routeOptions.map((route) => (
@@ -160,6 +163,20 @@ export default function HomePage() {
                 </p>
               </div>
 
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="mb-2 flex items-center justify-between text-sm font-medium text-slate-300">
+                  <span>Route pressure</span>
+                  <span className="font-bold text-amber-300">{routePressure}%</span>
+                </div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 transition-all duration-300"
+                    style={{ width: `${routePressure}%` }}
+                  />
+                </div>
+                <p className="mt-3 text-sm text-slate-200">{routeProfile.heat}</p>
+              </div>
+
               <div className="grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
@@ -184,6 +201,13 @@ export default function HomePage() {
                 </div>
                 <p className="mt-2 text-lg font-semibold text-white">
                   {selectedRoute}
+                </p>
+                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-emerald-300">
+                  {routeProfile.zone}
+                </p>
+                <p className="mt-2 text-sm text-slate-200">{routeProfile.vibe}</p>
+                <p className="mt-2 text-sm font-medium text-amber-300">
+                  Suggested base fare: ৳{routeProfile.baseFare}
                 </p>
               </div>
 
