@@ -320,9 +320,9 @@ export default function HomePage() {
         </section>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <StatBadge label="Refusals" value={stats.refusals} />
-          <StatBadge label="Fake money" value={`৳${stats.totalFare}`} />
-          <StatBadge label="Badges" value={stats.badges.length} />
+          <StatBadge label="Refusals" value={stats.refusals} accent="rose" />
+          <StatBadge label="Fake money" value={`৳${stats.totalFare}`} accent="amber" />
+          <StatBadge label="Badges" value={stats.badges.length} accent="emerald" />
         </div>
 
         <section className="mt-6 grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
@@ -485,6 +485,39 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-rose-300 bg-gradient-to-br from-rose-100 via-white to-amber-100 p-5 shadow-panel">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-rose-700">
+                Final verdict
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">
+                {reputationScore >= 2500 ? 'Legendary road dodger' : 'Street veteran'}
+              </h3>
+            </div>
+            <div className="rounded-full border border-rose-300 bg-white/70 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-rose-700">
+              {reputationScore >= 2500 ? 'Elite' : 'Rising'}
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-white/70 bg-white/60 p-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Best streak</p>
+              <p className="mt-2 text-xl font-black text-slate-900">{bestStreak}</p>
+            </div>
+            <div className="rounded-2xl border border-white/70 bg-white/60 p-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Mission clears</p>
+              <p className="mt-2 text-xl font-black text-slate-900">{stats.badges.length - 1}</p>
+            </div>
+            <div className="rounded-2xl border border-white/70 bg-white/60 p-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Route status</p>
+              <p className="mt-2 text-xl font-black text-slate-900">
+                {routeObjectiveComplete ? 'Dominant' : 'Persistent'}
+              </p>
+            </div>
+          </div>
         </section>
 
         <div className="mt-6">
