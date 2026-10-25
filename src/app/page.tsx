@@ -208,6 +208,7 @@ export default function HomePage() {
   const [selectedSeason, setSelectedSeason] = useState<(typeof citySeasons)[number]>(citySeasons[1]);
   const [selectedAmbience, setSelectedAmbience] = useState<(typeof ambiencePresets)[number]>(ambiencePresets[0]);
   const [storyIndex, setStoryIndex] = useState(0);
+  const [showRunSummary, setShowRunSummary] = useState(false);
 
   useEffect(() => {
     setStoryIndex(0);
@@ -313,6 +314,12 @@ export default function HomePage() {
     bestRoute: starringRoute.route,
     topMode: routeObjectiveComplete ? 'route mastered' : 'lane pressure rising',
   };
+  const summaryHeadline =
+    reputationScore >= 2500
+      ? 'Legendary city dodger'
+      : routeObjectiveComplete
+        ? 'Street tactician'
+        : 'Street veteran';
   const comboMultiplier = (1 + Math.min(bestStreak, 10) / 10).toFixed(1);
   const momentum = Math.min(
     100,
@@ -446,6 +453,13 @@ export default function HomePage() {
                 Refusal streak:{" "}
                 <span className="font-bold text-rose-500">{triggerCount}</span>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowRunSummary(true)}
+                className="rounded-full border border-emerald-200 bg-emerald-100 px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-emerald-700 transition hover:bg-emerald-200"
+              >
+                End run
+              </button>
               <button
                 type="button"
                 onClick={resetStats}
@@ -1366,6 +1380,90 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      {showRunSummary && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
+        >
+          <motion.div
+            initial={{ scale: 0.96, y: 12 }}
+            animate={{ scale: 1, y: 0 }}
+            className="w-full max-w-2xl rounded-[30px] border border-violet-300 bg-white p-6 shadow-2xl"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
+                  Run summary
+                </p>
+                <h3 className="mt-2 text-3xl font-black text-slate-900">{summaryHeadline}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRunSummary(false)}
+                className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Score</p>
+                <p className="mt-2 text-xl font-black text-slate-900">{runSummary.finalScore}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Best route</p>
+                <p className="mt-2 text-xl font-black text-slate-900">{runSummary.bestRoute}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Style</p>
+                <p className="mt-2 text-xl font-black text-slate-900">{runSummary.strongestStyle}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Season</p>
+                <p className="mt-2 text-xl font-black text-slate-900">{selectedSeason.name}</p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-violet-200 bg-violet-50 p-4">
+              <div className="mb-2 flex items-center justify-between text-sm font-medium text-slate-700">
+                <span>City control</span>
+                <span className="font-bold text-violet-700">{cityControl}%</span>
+              </div>
+              <div className="h-2.5 overflow-hidden rounded-full bg-violet-200">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500"
+                  style={{ width: `${cityControl}%` }}
+                />
+              </div>
+              <p className="mt-3 text-sm text-slate-700">{cityRank.detail}</p>
+            </div>
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRunSummary(false);
+                  resetStats();
+                }}
+                className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white"
+              >
+                Start new circuit
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowRunSummary(false)}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700"
+              >
+                Keep driving
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </main>
   );
 }
