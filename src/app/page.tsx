@@ -406,6 +406,43 @@ export default function HomePage() {
     progress: Math.min(100, Math.round((challenge.value / challenge.target) * 100)),
   }));
 
+  const dailyChallenges = useMemo(
+    () => [
+      {
+        id: 'street-boss',
+        title: 'Street boss',
+        description: 'Hold a refusal streak above 3.',
+        value: bestStreak,
+        target: 3,
+        reward: 'Boss aura',
+        tone: 'from-violet-500 to-fuchsia-500',
+      },
+      {
+        id: 'fare-command',
+        title: 'Fare command',
+        description: 'Build a fake fare total of ৳1,200 or more.',
+        value: stats.totalFare,
+        target: 1200,
+        reward: 'Cash swagger',
+        tone: 'from-amber-500 to-orange-500',
+      },
+      {
+        id: 'lane-pressure',
+        title: 'Lane pressure',
+        description: 'Push selected route heat above 75%.',
+        value: routePressure,
+        target: 75,
+        reward: 'City fear',
+        tone: 'from-emerald-500 to-teal-500',
+      },
+    ].map((challenge) => ({
+      ...challenge,
+      progress: Math.min(100, Math.round((challenge.value / challenge.target) * 100)),
+      complete: challenge.value >= challenge.target,
+    })),
+    [bestStreak, routePressure, stats.totalFare],
+  );
+
   const handleReject = () => {
     const nextExcuse = getRandomExcuseForRoute(selectedRoute);
     const effectiveFare = Math.min(
@@ -1304,6 +1341,52 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-violet-300 bg-gradient-to-br from-violet-100 via-white to-amber-100 p-5 shadow-panel">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
+                Daily mission board
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">Street quests</h3>
+            </div>
+            <div className="rounded-full border border-violet-300 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-violet-700">
+              {dailyChallenges.filter((challenge) => challenge.complete).length}/{dailyChallenges.length} cleared
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {dailyChallenges.map((challenge) => (
+              <div
+                key={challenge.id}
+                className={`rounded-2xl border p-4 ${challenge.complete ? 'border-emerald-200 bg-emerald-50' : 'border-white/80 bg-white/80'}`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-bold text-slate-900">{challenge.title}</span>
+                  <span className={`rounded-full bg-gradient-to-r ${challenge.tone} px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white`}>
+                    {challenge.complete ? 'Clear' : 'Live'}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-slate-600">{challenge.description}</p>
+                <div className="mt-3">
+                  <div className="mb-2 flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                    <span>{challenge.value}/{challenge.target}</span>
+                    <span>{challenge.progress}%</span>
+                  </div>
+                  <div className="h-2.5 overflow-hidden rounded-full bg-slate-200">
+                    <div
+                      className={`h-full rounded-full bg-gradient-to-r ${challenge.tone}`}
+                      style={{ width: `${challenge.progress}%` }}
+                    />
+                  </div>
+                </div>
+                <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700">
+                  Reward: {challenge.reward}
+                </p>
+              </div>
+            ))}
           </div>
         </section>
 
