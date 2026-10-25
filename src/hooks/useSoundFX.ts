@@ -4,18 +4,32 @@ import { useCallback } from 'react';
 
 import { useGameStore } from '@/store/gameStore';
 
+let audioContext: AudioContext | null = null;
+
 const getAudioContext = () => {
   if (typeof window === 'undefined') {
     return null;
   }
 
-  const AudioCtor =
-    window.AudioContext ||
-    (window as typeof window & {
-      webkitAudioContext?: typeof AudioContext;
-    }).webkitAudioContext;
+  if (!audioContext) {
+    const AudioCtor =
+      window.AudioContext ||
+      (window as typeof window & {
+        webkitAudioContext?: typeof AudioContext;
+      }).webkitAudioContext;
 
-  return AudioCtor ? new AudioCtor() : null;
+    if (!AudioCtor) {
+      return null;
+    }
+
+    audioContext = new AudioCtor();
+  }
+
+  if (audioContext.state === 'suspended') {
+    void audioContext.resume();
+  }
+
+  return audioContext;
 };
 
 export function useSoundFX() {
