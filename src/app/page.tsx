@@ -73,6 +73,29 @@ const riderArchetypes = [
   },
 ] as const;
 
+const trafficShifts = [
+  {
+    name: 'Morning rush',
+    bonus: 1.1,
+    mood: 'Crowded roads, rushed riders, and sharper tempers.',
+  },
+  {
+    name: 'Midday drift',
+    bonus: 1.25,
+    mood: 'People are tired but still willing to debate every price.',
+  },
+  {
+    name: 'Evening gridlock',
+    bonus: 1.4,
+    mood: 'Street energy peaks and every rider looks ready to explode.',
+  },
+  {
+    name: 'Night calm',
+    bonus: 0.95,
+    mood: 'Less noise, more patience, and a quieter negotiation rhythm.',
+  },
+] as const;
+
 export default function HomePage() {
   const {
     selectedRoute,
@@ -103,6 +126,7 @@ export default function HomePage() {
   const [routeEvent, setRouteEvent] = useState<(typeof streetEvents)[number]>(streetEvents[0]);
   const [selectedTactic, setSelectedTactic] = useState<(typeof tactics)[number]>(tactics[0]);
   const [selectedRider, setSelectedRider] = useState<(typeof riderArchetypes)[number]>(riderArchetypes[0]);
+  const [selectedShift, setSelectedShift] = useState<(typeof trafficShifts)[number]>(trafficShifts[2]);
   const [storyIndex, setStoryIndex] = useState(0);
 
   useEffect(() => {
@@ -208,14 +232,16 @@ export default function HomePage() {
       500,
       Math.max(
         20,
-        Math.round((fare + routeEvent.modifier) * selectedTactic.bonus * selectedRider.bonus),
+        Math.round(
+          (fare + routeEvent.modifier) * selectedTactic.bonus * selectedRider.bonus * selectedShift.bonus,
+        ),
       ),
     );
 
     setInsultText(nextExcuse);
     registerRefusal(effectiveFare, nextExcuse);
     logEvent(
-      `${selectedTactic.label} on ${selectedRoute}: ${routeEvent.name} is active.`,
+      `${selectedTactic.label} on ${selectedRoute} • ${selectedShift.name}: ${routeEvent.name} is active.`,
     );
     setStoryIndex((current) => (current + 1) % routeProfile.story.length);
     playBell();
@@ -421,6 +447,32 @@ export default function HomePage() {
                 </div>
               </div>
 
+              <div className="rounded-2xl border border-cyan-400/30 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 p-4">
+                <div className="mb-3 text-sm font-semibold text-cyan-200">Traffic shift</div>
+                <div className="space-y-2">
+                  {trafficShifts.map((shift) => (
+                    <button
+                      key={shift.name}
+                      type="button"
+                      onClick={() => setSelectedShift(shift)}
+                      className={`w-full rounded-2xl border px-3 py-2 text-left transition ${
+                        selectedShift.name === shift.name
+                          ? 'border-cyan-400 bg-cyan-400/10 text-cyan-100'
+                          : 'border-white/10 bg-slate-800 text-slate-200 hover:border-white/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold">{shift.name}</span>
+                        <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                          x{shift.bonus.toFixed(2)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-300">{shift.mood}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-medium text-slate-300">Street audio</div>
@@ -553,6 +605,10 @@ export default function HomePage() {
                 <span>traffic mood</span>
                 <span className="font-bold text-emerald-300">{routePressure}%</span>
               </div>
+              <div className="flex items-center justify-between">
+                <span>shift</span>
+                <span className="font-bold text-cyan-300">{selectedShift.name}</span>
+              </div>
             </div>
           </div>
         </section>
@@ -656,6 +712,25 @@ export default function HomePage() {
                 : `Keep refusing riders on this route to complete the objective and unlock a special badge.`}
             </p>
           </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-cyan-300 bg-gradient-to-br from-cyan-100 via-white to-emerald-100 p-5 shadow-panel">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-700">
+                Rider threat
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">{selectedRider.name}</h3>
+            </div>
+            <div className="rounded-full border border-cyan-300 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">
+              x{selectedRider.bonus.toFixed(2)}
+            </div>
+          </div>
+
+          <p className="mt-4 text-sm leading-6 text-slate-700">{selectedRider.threat}</p>
+          <p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+            {selectedRider.pressure}
+          </p>
         </section>
 
         <section className="mt-6 rounded-[28px] border border-cyan-300 bg-gradient-to-br from-cyan-100 via-white to-emerald-100 p-5 shadow-panel">
