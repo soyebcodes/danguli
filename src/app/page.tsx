@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, MapPin, PiggyBank, Sparkles } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { PotholeMiniGame } from "@/components/rickshaw/PotholeMiniGame";
 import { RickshawScene } from "@/components/rickshaw/RickshawScene";
@@ -12,6 +12,39 @@ import { getRandomExcuseForRoute } from "@/data/excuses";
 import { routeOptions, routeProfiles } from "@/data/routes";
 import { useSoundFX } from "@/hooks/useSoundFX";
 import { useGameStore } from "@/store/gameStore";
+
+const streetEvents = [
+  {
+    name: 'Rush-hour surge',
+    mood: 'Crowds are dense and the riders are already shouting over each other.',
+    modifier: 20,
+    accent: 'text-amber-300',
+  },
+  {
+    name: 'Rain slick',
+    mood: 'The lane is slippery and everyone wants to avoid getting stuck in traffic.',
+    modifier: 30,
+    accent: 'text-cyan-300',
+  },
+  {
+    name: 'Market jam',
+    mood: 'A packed bazaar makes every rider feel like the lane is theirs.',
+    modifier: 40,
+    accent: 'text-emerald-300',
+  },
+  {
+    name: 'Police check',
+    mood: 'The route is tighter, but the story needs to stay calm and deliberate.',
+    modifier: -10,
+    accent: 'text-violet-300',
+  },
+] as const;
+
+const tactics = [
+  { label: 'Hold the line', bonus: 1, note: 'Steady refusal with no extra noise.' },
+  { label: 'Break the rhythm', bonus: 1.25, note: 'Mute the rider, then drag the argument out.' },
+  { label: 'Turn the crowd', bonus: 1.5, note: 'Use the crowd as your witness and force a scene.' },
+] as const;
 
 export default function HomePage() {
   const {
@@ -40,6 +73,8 @@ export default function HomePage() {
   } = useGameStore();
   const { playBell, playWhistle } = useSoundFX();
   const routeProfile = routeProfiles[selectedRoute];
+  const [routeEvent, setRouteEvent] = useState<(typeof streetEvents)[number]>(streetEvents[0]);
+  const [selectedTactic, setSelectedTactic] = useState<(typeof tactics)[number]>(tactics[0]);
 
   const mood = useMemo(() => {
     if (fare <= 40) {
@@ -134,9 +169,16 @@ export default function HomePage() {
 
   const handleReject = () => {
     const nextExcuse = getRandomExcuseForRoute(selectedRoute);
+    const effectiveFare = Math.min(
+      500,
+      Math.max(20, Math.round((fare + routeEvent.modifier) * selectedTactic.bonus)),
+    );
+
     setInsultText(nextExcuse);
-    registerRefusal(fare, nextExcuse);
-    logEvent(`Street drama on ${selectedRoute}: refusal delivered.`);
+    registerRefusal(effectiveFare, nextExcuse);
+    logEvent(
+      `${selectedTactic.label} on ${selectedRoute}: ${routeEvent.name} is active.`,
+    );
     playBell();
     playWhistle();
 
@@ -259,6 +301,59 @@ export default function HomePage() {
                   />
                 </div>
                 <p className="mt-3 text-sm text-slate-200">{routeProfile.heat}</p>
+              </div>
+
+              <div className="rounded-2xl border border-amber-400/30 bg-gradient-to-br from-amber-500/10 to-violet-500/10 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold text-amber-200">Street event</div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentIndex = streetEvents.findIndex(
+                        (event) => event.name === routeEvent.name,
+                      );
+                      const nextIndex = (currentIndex + 1) % streetEvents.length;
+                      setRouteEvent(streetEvents[nextIndex]);
+                    }}
+                    className="rounded-full border border-white/10 bg-slate-800 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-100"
+                  >
+                    Shift scene
+                  </button>
+                </div>
+                <p className={`mt-3 text-lg font-black ${routeEvent.accent}`}>
+                  {routeEvent.name}
+                </p>
+                <p className="mt-2 text-sm text-slate-200">{routeEvent.mood}</p>
+                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-amber-200">
+                  Bonus: {routeEvent.modifier > 0 ? '+' : ''}
+                  {routeEvent.modifier}৳
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="mb-3 text-sm font-medium text-slate-300">Tactical play</div>
+                <div className="space-y-2">
+                  {tactics.map((tactic) => (
+                    <button
+                      key={tactic.label}
+                      type="button"
+                      onClick={() => setSelectedTactic(tactic)}
+                      className={`w-full rounded-2xl border px-3 py-2 text-left transition ${
+                        selectedTactic.label === tactic.label
+                          ? 'border-amber-400 bg-amber-400/10 text-amber-100'
+                          : 'border-white/10 bg-slate-800 text-slate-200 hover:border-white/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold">{tactic.label}</span>
+                        <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                          x{tactic.bonus.toFixed(2)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-300">{tactic.note}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
