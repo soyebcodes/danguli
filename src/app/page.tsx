@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, MapPin, PiggyBank, Sparkles } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { PotholeMiniGame } from "@/components/rickshaw/PotholeMiniGame";
 import { RickshawScene } from "@/components/rickshaw/RickshawScene";
@@ -58,6 +58,18 @@ export default function HomePage() {
     100,
     Math.round((routeProfile.demand + fare / 5) / 1.65),
   );
+  const routeObjectiveTarget = Math.max(3, Math.round(routeProfile.demand / 25));
+  const routeObjectiveProgress = Math.min(
+    100,
+    Math.round((triggerCount / routeObjectiveTarget) * 100),
+  );
+  const routeObjectiveComplete = triggerCount >= routeObjectiveTarget;
+
+  useEffect(() => {
+    if (routeObjectiveComplete) {
+      unlockBadge(`${selectedRoute} specialist`);
+    }
+  }, [routeObjectiveComplete, selectedRoute, unlockBadge]);
 
   const challengeCards = [
     {
@@ -366,6 +378,45 @@ export default function HomePage() {
                 <p className="mt-2 text-sm text-slate-300">{challenge.hint}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-emerald-300 bg-gradient-to-br from-emerald-100 via-white to-amber-100 p-5 shadow-panel">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">
+                Route objective
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">
+                {selectedRoute} challenge
+              </h3>
+            </div>
+
+            <div className="rounded-full border border-emerald-300 bg-white/60 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">
+              {routeObjectiveComplete ? 'Cleared' : 'In progress'}
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/70 bg-white/60 p-4">
+            <div className="mb-2 flex items-center justify-between text-sm font-medium text-slate-700">
+              <span>
+                {triggerCount}/{routeObjectiveTarget} refusals
+              </span>
+              <span className="font-bold text-emerald-700">
+                {routeObjectiveProgress}%
+              </span>
+            </div>
+            <div className="h-3 overflow-hidden rounded-full bg-emerald-100">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500 transition-all duration-300"
+                style={{ width: `${routeObjectiveProgress}%` }}
+              />
+            </div>
+            <p className="mt-3 text-sm text-slate-700">
+              {routeObjectiveComplete
+                ? `Mastered this route. Badge earned: ${selectedRoute} specialist.`
+                : `Keep refusing riders on this route to complete the objective and unlock a special badge.`}
+            </p>
           </div>
         </section>
 
