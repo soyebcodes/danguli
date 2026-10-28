@@ -6,31 +6,32 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: "Amader Rickshaw Mama",
-    template: "%s | Amader Rickshaw Mama",
+    default: "ডাংগুলি ১৯৯০ | Dang Guli 1990 - 90s Village Childhood Game",
+    template: "%s | ডাংগুলি ১৯৯০",
   },
   description:
-    "A cinematic Bangladeshi rickshaw refusal simulator with lane chaos, fare battles, and street-level strategy.",
-  applicationName: "Amader Rickshaw Mama",
+    "নব্বইয়ের দশকের খাঁটি গ্রামীণ বাংলার ডাংগুলি খেলা। টুপ মারো, সজোরে বাড়ি হাঁকাও আর সরিষা ক্ষেত ছাড়িয়ে কাঠি মেপে রেকর্ড গড়ো!",
+  applicationName: "Dang Guli 1990",
   keywords: [
-    "rickshaw game",
-    "Bangladesh",
-    "refusal simulator",
-    "street strategy",
-    "interactive fiction",
+    "dang guli",
+    "ডাংগুলি",
+    "bangladeshi 90s game",
+    "village childhood games",
+    "nostalgic bangla game",
+    "guli danda",
   ],
   openGraph: {
-    title: "Amader Rickshaw Mama",
+    title: "ডাংগুলি ১৯৯০: গ্রামীণ স্মৃতি",
     description:
-      "A polished, atmospheric refusal simulator about surviving the chaos of Dhaka traffic.",
+      "নব্বইয়ের দশকের নস্টালজিক গ্রামীণ খেলা— টুপ মেরে শূন্যে ভাসাও, সজোরে বাড়ি দিয়ে বটগাছ ও সরিষা ক্ষেত পার করো!",
     type: "website",
-    siteName: "Amader Rickshaw Mama",
+    siteName: "Dang Guli 1990",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Amader Rickshaw Mama",
+    title: "ডাংগুলি ১৯৯০: গ্রামীণ স্মৃতি",
     description:
-      "A high-energy Bangladeshi rickshaw refusal simulator with style, crowd pressure, and route strategy.",
+      "নব্বইয়ের দশকের খাঁটি গ্রামীণ বাংলার ডাংগুলি খেলা।",
   },
 };
 
@@ -38,7 +39,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="bn" suppressHydrationWarning>
       <body className={inter.className}>{children}</body>
     </html>
   );
