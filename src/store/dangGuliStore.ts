@@ -172,6 +172,9 @@ export const useDangGuliStore = create<DangGuliState>()(
 
       recordShot: (result) => {
         const state = get();
+        if (state.phase === "turn_ended" || state.phase === "tournament_over") {
+          return;
+        }
         const earnedKaathi = Math.max(0, result.distance);
         const newTotalKaathi = state.totalCareerKaathi + earnedKaathi;
         const newBest = Math.max(state.bestShotDistance, earnedKaathi);

@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDangGuliAudio } from "@/hooks/useDangGuliAudio";
-import { useDangGuliStore } from "@/store/dangGuliStore";
+import { ShotResult, useDangGuliStore } from "@/store/dangGuliStore";
 import { ArrowRight, RotateCcw, Award } from "lucide-react";
 
 export const DangGuliScoreCard: React.FC = () => {
   const phase = useDangGuliStore((s) => s.phase);
   const lastShot = useDangGuliStore((s) => s.lastShot);
+  const gameMode = useDangGuliStore((s) => s.gameMode);
   const currentInning = useDangGuliStore((s) => s.currentInning);
   const maxInnings = useDangGuliStore((s) => s.maxInnings);
   const inningScores = useDangGuliStore((s) => s.inningScores);
@@ -15,36 +16,51 @@ export const DangGuliScoreCard: React.FC = () => {
   const resetTournament = useDangGuliStore((s) => s.resetTournament);
 
   const audio = useDangGuliAudio();
+  const audioRef = useRef(audio);
+  audioRef.current = audio;
 
   // Counting animation for Kaathi
   const [displayCount, setDisplayCount] = useState<number>(0);
+  const lastAnimatedShotRef = useRef<ShotResult | null>(null);
 
   const totalTournamentScore = inningScores.reduce((a, b) => a + b, 0);
 
   useEffect(() => {
-    if (phase === "turn_ended" && lastShot) {
-      const target = lastShot.distance;
-      if (target <= 0) {
-        setDisplayCount(0);
-        return;
-      }
-
-      let current = 0;
-      const step = Math.max(1, Math.floor(target / 18));
-      const interval = setInterval(() => {
-        current += step;
-        if (current >= target) {
-          setDisplayCount(target);
-          clearInterval(interval);
-        } else {
-          setDisplayCount(current);
-          audio.playKaathiTick(current);
-        }
-      }, 35);
-
-      return () => clearInterval(interval);
+    if (phase !== "turn_ended") {
+      lastAnimatedShotRef.current = null;
+      return;
     }
-  }, [phase, lastShot, audio]);
+
+    if (!lastShot) return;
+
+    // Avoid restarting the count animation if this exact shot was already animated
+    if (lastAnimatedShotRef.current === lastShot) {
+      return;
+    }
+    lastAnimatedShotRef.current = lastShot;
+
+    const target = lastShot.distance;
+    if (target <= 0) {
+      setDisplayCount(0);
+      return;
+    }
+
+    let current = 0;
+    setDisplayCount(0);
+    const step = Math.max(1, Math.floor(target / 18));
+    const interval = setInterval(() => {
+      current += step;
+      if (current >= target) {
+        setDisplayCount(target);
+        clearInterval(interval);
+      } else {
+        setDisplayCount(current);
+        audioRef.current.playKaathiTick(current);
+      }
+    }, 35);
+
+    return () => clearInterval(interval);
+  }, [phase, lastShot]);
 
   if (phase !== "turn_ended" && phase !== "tournament_over") {
     return null;
@@ -153,7 +169,11 @@ export const DangGuliScoreCard: React.FC = () => {
               onClick={startNewInning}
               className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 py-3.5 text-base font-black text-white hover:brightness-110 active:scale-95 transition shadow-lg shadow-amber-600/30 border border-amber-300/40"
             >
-              <span>পরের ইনিংস খেলুন ({currentInning + 1}/{maxInnings})</span>
+              <span>
+                {gameMode === "practice"
+                  ? "আবার মারুন (অনুশীলন)"
+                  : `পরের ইনিংস খেলুন (${currentInning + 1}/${maxInnings})`}
+              </span>
               <ArrowRight className="h-5 w-5" />
             </button>
           </div>

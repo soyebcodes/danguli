@@ -50,6 +50,8 @@ export const DangGuliCanvas: React.FC = () => {
 
   // Sound engine
   const audio = useDangGuliAudio();
+  const audioRef = useRef(audio);
+  audioRef.current = audio;
 
   // Active gear
   const stick = DANG_STICKS.find((s) => s.id === selectedStickId) || DANG_STICKS[0];
@@ -92,6 +94,7 @@ export const DangGuliCanvas: React.FC = () => {
   const animationFrameId = useRef<number | null>(null);
   const phaseRef = useRef<GamePhase>(phase);
   phaseRef.current = phase;
+  const hasRecordedRef = useRef<boolean>(false);
 
   // Shot calculation stats
   const shotStatsRef = useRef({
@@ -127,6 +130,7 @@ export const DangGuliCanvas: React.FC = () => {
 
   // Reset Guli position to Ghop
   const resetToGhop = useCallback(() => {
+    hasRecordedRef.current = false;
     guliRef.current = {
       x: GHOP_X,
       y: GROUND_Y - 8,
@@ -332,12 +336,13 @@ export const DangGuliCanvas: React.FC = () => {
           g.y = GROUND_Y - 8;
           g.vy = 0;
           g.vx = 0;
-          audio.playSwingMiss();
+          audioRef.current.playSwingMiss();
           setOnScreenFeedback({
             title: "দেরি হয়ে গেল!",
             sub: "গুলি মাটিতে পড়ে গেল। নিচে 'পুনরায় চেষ্টা' চাপুন।",
             color: "text-rose-400",
           });
+          phaseRef.current = "miss";
           setPhase("miss");
         }
       } else if (curPhase === "flying" || curPhase === "landing") {
@@ -380,15 +385,16 @@ export const DangGuliCanvas: React.FC = () => {
               shotStatsRef.current.fielderCaught = true;
               g.vx = 0;
               g.vy = 0;
-              audio.playFielderCatch();
+              audioRef.current.playFielderCatch();
               setOnScreenFeedback({
                 title: `${f.nameBn} লুফে নিল!`,
                 sub: `ক্যাচ আউট! "${f.taunt}"`,
                 color: "text-rose-400",
               });
+              phaseRef.current = "caught";
               setPhase("caught");
             } else if (f.id === "boltu" && Math.random() < 0.45) {
-              audio.playBounce();
+              audioRef.current.playBounce();
               setOnScreenFeedback({
                 title: "বল্টুর হাত ফস্কে গেল!",
                 sub: `"${f.cheer}" - বেঁচে গেলি রে ভাই!`,
@@ -406,7 +412,7 @@ export const DangGuliCanvas: React.FC = () => {
           g.y = tinRoofY;
           g.vy = -g.vy * 0.65;
           g.vx *= 1.1;
-          audio.playTinRoof();
+          audioRef.current.playTinRoof();
           shotStatsRef.current.hitBonus = "টিনের চালে ড্রপ (+১০ কাঠি বোনাস!)";
           spawnParticles(g.x, g.y, 8, "#94a3b8", 3);
         }
@@ -415,7 +421,7 @@ export const DangGuliCanvas: React.FC = () => {
         const pondStartPx = GHOP_X + 280 * PIXELS_PER_KAATHI;
         const pondEndPx = GHOP_X + 335 * PIXELS_PER_KAATHI;
         if (g.x >= pondStartPx && g.x <= pondEndPx && g.y >= GROUND_Y - 4) {
-          audio.playPondSplash();
+          audioRef.current.playPondSplash();
           spawnParticles(g.x, GROUND_Y, 15, "#38bdf8", 4);
           if (g.vx > 6) {
             g.vy = -g.vy * 0.42;
@@ -435,7 +441,7 @@ export const DangGuliCanvas: React.FC = () => {
           if (Math.abs(g.vy) > 1.2) {
             g.vy = -g.vy * (0.45 * guliGear.bounce);
             g.vx *= 0.8;
-            audio.playBounce();
+            audioRef.current.playBounce();
             spawnParticles(g.x, GROUND_Y, 6, "#78350f", 2);
           } else {
             // Rolling to rest
@@ -453,6 +459,7 @@ export const DangGuliCanvas: React.FC = () => {
               );
               shotStatsRef.current.measuringProgress = 0;
               d.measuringX = GHOP_X;
+              phaseRef.current = "measuring";
               setPhase("measuring");
             }
           }
@@ -485,7 +492,7 @@ export const DangGuliCanvas: React.FC = () => {
         if (Math.floor(shotStatsRef.current.measuringProgress) > currentStep - 1) {
           // Play once per new kaathi
           if (currentStep > 0 && currentStep <= finalKaathi && currentStep % 2 === 0) {
-            audio.playKaathiTick(currentStep);
+            audioRef.current.playKaathiTick(currentStep);
           }
         }
 
@@ -494,7 +501,9 @@ export const DangGuliCanvas: React.FC = () => {
         cameraXRef.current += (targetCam - cameraXRef.current) * 0.1;
 
         // If measuring completed all the way to Guli!
-        if (shotStatsRef.current.measuringProgress >= finalKaathi + 1.5) {
+        if (!hasRecordedRef.current && shotStatsRef.current.measuringProgress >= finalKaathi + 1.5) {
+          hasRecordedRef.current = true;
+          phaseRef.current = "turn_ended";
           // Finished measuring!
           let commentary = NOSTALGIC_COMMENTARY.goodHit[0];
           if (finalKaathi >= 4) {
@@ -861,7 +870,6 @@ export const DangGuliCanvas: React.FC = () => {
     stick,
     guliGear,
     wind,
-    audio,
     selectedGuliId,
     spawnParticles,
   ]);

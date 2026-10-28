@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useDangGuliStore } from "@/store/dangGuliStore";
 
 let audioContext: AudioContext | null = null;
@@ -307,15 +307,28 @@ export function useDangGuliAudio() {
     }
   }, [soundEnabled, volume]);
 
-  return {
-    playTip,
-    playSwingMiss,
-    playHit,
-    playBounce,
-    playTinRoof,
-    playPondSplash,
-    playFielderCatch,
-    playKaathiTick,
-    playCrowdCheer,
-  };
+  return useMemo(
+    () => ({
+      playTip,
+      playSwingMiss,
+      playHit,
+      playBounce,
+      playTinRoof,
+      playPondSplash,
+      playFielderCatch,
+      playKaathiTick,
+      playCrowdCheer,
+    }),
+    [
+      playTip,
+      playSwingMiss,
+      playHit,
+      playBounce,
+      playTinRoof,
+      playPondSplash,
+      playFielderCatch,
+      playKaathiTick,
+      playCrowdCheer,
+    ]
+  );
 }
